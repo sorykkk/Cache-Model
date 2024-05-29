@@ -44,10 +44,10 @@ module control_unit #(
     //change states
     always @(posedge clk) begin 
         if(!rst_n) state <= IDLE;
-        else state <= next;
+        else       state <= next;
     end
 
-    //set next state
+    // set next state
     always @(posedge clk) begin 
         next <= IDLE;
         case(state)
@@ -70,16 +70,18 @@ module control_unit #(
         endcase
     end
 
-    //trigger signals based on next state
+    // trigger signals based on next state
     always begin 
 
         case(next)
             IDLE: begin 
+
                     mem_wr_en <= 0;
                     hit = ((valid[0][addr[`INDEX]] && (tag[0][addr[`INDEX]] == addr[`TAG]))
                          ||(valid[1][addr[`INDEX]] && (tag[1][addr[`INDEX]] == addr[`TAG]))
                          ||(valid[2][addr[`INDEX]] && (tag[2][addr[`INDEX]] == addr[`TAG]))
                          ||(valid[3][addr[`INDEX]] && (tag[3][addr[`INDEX]] == addr[`TAG])));
+            
             end
 
             RD_HIT: begin 
@@ -93,14 +95,21 @@ module control_unit #(
                     end
                 end
                 
-
             end
 
             RD_MISS: begin 
+                
+                if(~valid[0][addr[`INDEX]]) begin 
+                    
+                end
 
             end
 
             WR_HIT : begin 
+
+            end
+
+            WR_MISS : begin 
 
             end
 
