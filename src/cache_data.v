@@ -37,8 +37,7 @@ module cache_data #(
     input  wire                  clk, rst_n,
     
     input  wire [PA_WIDTH-1:0]   addr,         // addr from CPU
-    input  wire [WRD_WIDTH-1:0]  data_wr,      // data from CPU (store instruction) / data to write
-    output wire [WRD_WIDTH-1:0]  data_rd,      // data to the CPU (data read)    
+    input  wire [WRD_WIDTH-1:0]  data_wr,      // data from CPU (store instruction) / data to write 
     
     input  wire                  rd_en,        // 1 if load instr
     input  wire                  wr_en,        // 1 if store instr
@@ -48,9 +47,13 @@ module cache_data #(
     output wire [BYTE-1:0]       byte_out,     // byte that is extracted from word
     
     //memory control outputs
+    output wire [PA_WIDTH-1:0]   mem_rd_addr,
+    input  wire [MEM_WIDTH-1:0]  mem_rd_blk,
+
+
     output wire                  mem_wr_en,    // 1 if writing to memory
     output wire [PA_WIDTH-1:0]   mem_wr_addr,  // memory write address (address in MM where the dirty block is written)
-    output wire [MEM_WIDTH-1:0]  mem_wr_data, // data from cache to memory
+    output wire [MEM_WIDTH-1:0]  mem_wr_blk,  // data from cache to memory
 );
 
     // Define all ways
@@ -76,38 +79,34 @@ module cache_data #(
 
 
     // Define internal reg
-    reg                  _hit_miss     = 1'b0;
+    reg                  _hit          = 1'b0;
     reg [WRD_WIDTH-1:0]  _word_out     = {WRD_WIDTH{1'b0}};
     reg [BYTE-1:0]       _byte_out     = {BYTE{1'b0}};
-    reg [MEM_WIDTH-1:0]  _mem_data_out = {WRD_WIDTH{1'b0}};
+    reg [MEM_WIDTH-1:0]  _mem_wr_data  = {WRD_WIDTH{1'b0}};
     reg [PA_WIDTH-1:0]   _mem_wr_addr  = {PA_WIDTH{1'b0}};
     reg                  _mem_wr_en    = 1'b0; 
 
     assign hit = _hit;
-    // daca oricare block din set este valid si ii tag-ul cautat
-    assign mem_rd_en = !((valid[0][addr[`INDEX]] && (tag[0][addr[`INDEX]] == addr[`TAG]))
-                       ||(valid[1][addr[`INDEX]] && (tag[1][addr[`INDEX]] == addr[`TAG]))
-                       ||(valid[2][addr[`INDEX]] && (tag[2][addr[`INDEX]] == addr[`TAG]))
-                       ||(valid[3][addr[`INDEX]] && (tag[3][addr[`INDEX]] == addr[`TAG])));
 
     assign mem_wr_en    = _mem_wr_en;
     assign mem_data_out = _mem_data_out;
-    assign mem_rd_addr  = {addr[`TAG], addr[`INDEX]};
     assign mem_wr_addr  = _mem_wr_addr;
     assign word_out     = _word_out;
     assign byte_out     = _byte_out;
+    assign mem_wr_data  = _mem_wr_data;
 
 
-    cache_fsm cache_cntrl(  .clk(clk),     
-                            .rst_n(rst_n),
-                            .valid(valid), 
-                            .dirty(dirty),
-                            .tag(tag),     
-                            .data(data), 
-                            .lru(lru),     
-                            .word_out(_word_out),
-                            .byte_out(_byte_out), 
-                            .hit(_hit)
+    cache_fsm cache_cntrl(  .clk        (clk),     
+                            .rst_n      (rst_n),
+                            .valid      (valid), 
+                            .dirty      (dirty),
+                            .tag        (tag),     
+                            .data       (data), 
+                            .lru        (lru),     
+                            .word_out   (_word_out),
+                            .byte_out   (_byte_out), 
+                            .hit        (_hit),
+                            .mem_wr_data(_mem_wr_data)
                         );
     
     

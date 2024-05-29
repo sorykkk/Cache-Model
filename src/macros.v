@@ -15,7 +15,7 @@
 `define PA_WIDTH  32      // width of physical address and  in bits
 `define WRD_WIDTH 32      // width of a word in bits
 
-`define MEM_WIDTH 32     // = 1 word
+`define MEM_WIDTH 512     // = 1 word
 
 `define IDX_WIDTH 7       // 128 sets (1 set = 4 blocks)
 `define TAG_WIDTH 19

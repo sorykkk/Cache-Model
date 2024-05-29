@@ -26,17 +26,19 @@ module control_unit #(
     input  wire [TAG_WIDTH-1:0]  tag   [0:NWAYS-1][0:NSETS-1],
     input  wire [BLOCK_SIZE-1:0] data  [0:NWAYS-1][0:NSETS-1],
 
+    input  wire [MEM_WIDTH-1:0]  mem_rd_data,
+
     output wire [WRD_WIDTH-1:0]  word_out,
     output wire [BYTE-1:0]       byte_out
 );
 
     // state parameters
-    parameter IDLE    = 3'b000;
-    parameter RD_HIT  = 3'b001;
-    parameter RD_MISS = 3'b010;
-    parameter WR_HIT  = 3'b011;
-    parameter WR_MISS = 3'b100;
-    parameter EVICT   = 3'b101;
+    localparam IDLE    = 3'b000;
+    localparam RD_HIT  = 3'b001;
+    localparam RD_MISS = 3'b010;
+    localparam WR_HIT  = 3'b011;
+    localparam WR_MISS = 3'b100;
+    localparam EVICT   = 3'b101;
 
     // state registers
     reg[2:0] state, next;
@@ -86,7 +88,7 @@ module control_unit #(
 
             RD_HIT: begin 
 
-                genvar i;
+                integer i;
                 for(i = 0; i < NWAYS; i = i+1) begin 
                     //i_th way
                     if(valid[i][addr[`INDEX]] && (tag[i][addr[`INDEX]] == addr[`TAG])) begin
