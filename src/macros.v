@@ -11,7 +11,7 @@
 `define SIZE      (1<<18) // total size of cache data size in bits
 `define NWAYS     4       // number of set associetivity
 `define NSETS     128     // number of sets in cache
-`define BLK_SIZE  512     // size of the block in bits
+`define BLK_WIDTH 512     // size of the block in bits
 `define PA_WIDTH  32      // width of physical address and  in bits
 `define WRD_WIDTH 32      // width of a word in bits
 

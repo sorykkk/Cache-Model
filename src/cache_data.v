@@ -22,7 +22,7 @@ module cache_data #(
     parameter SIZE      = `SIZE,
     parameter NWAYS     = `NWAYS,
     parameter NSETS     = `NSETS,
-    parameter BLK_SIZE  = `BLK_SIZE,
+    parameter BLK_WIDTH = `BLK_WIDTH,
     parameter PA_WIDTH  = `PA_WIDTH,
     parameter WRD_WIDTH = `WRD_WIDTH,
 
@@ -53,7 +53,7 @@ module cache_data #(
 
     output wire                  mem_wr_en,    // 1 if writing to memory
     output wire [PA_WIDTH-1:0]   mem_wr_addr,  // memory write address (address in MM where the dirty block is written)
-    output wire [MEM_WIDTH-1:0]  mem_wr_blk,  // data from cache to memory
+    output wire [MEM_WIDTH-1:0]  mem_wr_blk,   // data from cache to memory
 );
 
     // Define all ways
@@ -61,7 +61,7 @@ module cache_data #(
     reg                  dirty [0:NWAYS-1][0:NSETS-1];
     reg [1:0]            lru   [0:NWAYS-1][0:NSETS-1];
     reg [TAG_WIDTH-1:0]  tag   [0:NWAYS-1][0:NSETS-1];
-    reg [BLK_SIZE-1:0]   data  [0:NWAYS-1][0:NSETS-1];
+    reg [BLK_WIDTH-1:0]  data  [0:NWAYS-1][0:NSETS-1];
 
     // Init to 0 all
     integer i, j;
