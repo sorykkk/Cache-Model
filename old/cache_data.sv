@@ -1,33 +1,68 @@
+/*
+* Sorin Besleaga
+* Last modified: 30.05.24
+* Status: unfinished
+*/
+
+/*
+* Specs:
+*       Associativity level: 4   way
+*       Cache data size:     32  KiB
+*       Block size:          64  B/block
+*       Number of sets:      128 sets
+*       Word size:           4   B/word
+*       Words per block:     16  words/block
+*       Memory alignment:    Big-Endian
+*/
+
 `include "macros.sv"
+`include "cache_fsm.sv"
 
-// Cannot interrupt synthethizably interrupt for loop 
-// That's why i am using hard-codded if's for each way
-
-module control_unit
+module cache_data
 (
     input  wire                  clk, rst_n,
-    input  wire                  rd_en, wr_en,
-
-    output reg                   valid [0:NWAYS-1][0:NSETS-1],
-    output reg                   dirty [0:NWAYS-1][0:NSETS-1],
-    output reg  [1:0]            lru   [0:NWAYS-1][0:NSETS-1],
-    output reg  [TAG_WIDTH-1:0]  tag   [0:NWAYS-1][0:NSETS-1],
-    output reg  [BLK_WIDTH-1:0]  data  [0:NWAYS-1][0:NSETS-1],
-
-    input  wire [PA_WIDTH-1:0]   addr,
-    input  wire [WRD_WIDTH-1:0]  data_wr,
-
+    
+    input  wire [PA_WIDTH-1:0]   addr,         // addr from CPU
+    input  wire [WRD_WIDTH-1:0]  data_wr,      // data from CPU (store instruction) / data to write 
+    
+    input  wire                  rd_en,        // 1 if load instr
+    input  wire                  wr_en,        // 1 if store instr
+    
+    //memory control outputs
     input  wire [BLK_WIDTH-1:0]  mem_rd_blk,
-
-    output reg                   mem_wr_en,
+    output reg  [PA_WIDTH-1:0]   mem_addr,
     output reg                   mem_rd_en,
-    output reg [PA_WIDTH-1:0]    mem_addr,
-    output reg [BLK_WIDTH]       mem_wr_blk,  
+    output reg                   mem_wr_en,    // 1 if writing to memory
+    output reg [BLK_WIDTH-1:0]   mem_wr_blk,   // data from cache to memory
 
-    output reg                   hit,
-    output reg [WRD_WIDTH-1:0]   word_out,
-    output reg [BYTE-1:0]        byte_out
+    output reg                   hit,          // 1 if hit, 0 if miss
+    output reg  [WRD_WIDTH-1:0]  word_out,     // data from cache to CPU
+    output reg  [BYTE-1:0]       byte_out      // byte that is extracted from word
 );
+
+    // Define all ways
+    reg                  valid [0:NWAYS-1][0:NSETS-1];
+    reg                  dirty [0:NWAYS-1][0:NSETS-1];
+    reg [1:0]            lru   [0:NWAYS-1][0:NSETS-1];
+    reg [TAG_WIDTH-1:0]  tag   [0:NWAYS-1][0:NSETS-1];
+    reg [BLK_WIDTH-1:0]  data  [0:NWAYS-1][0:NSETS-1];
+
+    // Init to 0 all
+    integer i, j;
+    initial begin 
+        for(i = 0; i < NWAYS; i = i + 1) 
+        begin
+            for(j = 0; j < NSETS; j = j + 1) 
+            begin 
+                valid[i][j] = 1'b0;
+                dirty[i][j] = 1'b0;
+                lru  [i][j] = 2'b00;
+            end
+        end
+
+    end
+
+    // start of actual FSM
 
     // state parameters
     localparam IDLE       = 3'b000;
@@ -37,13 +72,12 @@ module control_unit
     localparam WR_MISS    = 3'b100;
     localparam EVICT   = 3'b101;
 
-    integer i;
-
     assign hit = ((valid[0][addr[`INDEX]] && (tag[0][addr[`INDEX]] == addr[`TAG]))
                 ||(valid[1][addr[`INDEX]] && (tag[1][addr[`INDEX]] == addr[`TAG]))
                 ||(valid[2][addr[`INDEX]] && (tag[2][addr[`INDEX]] == addr[`TAG]))
                 ||(valid[3][addr[`INDEX]] && (tag[3][addr[`INDEX]] == addr[`TAG])));
 
+                
     // state registers
     reg[2:0] state, next;
     reg rd_m, wr_m;
