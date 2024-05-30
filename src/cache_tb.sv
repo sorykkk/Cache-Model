@@ -27,9 +27,9 @@ module cache_tb;
     reg [BYTE-1:0]       byte_out;
 
     //cache signals
-    reg                  cache_mem_wr_en, cache_mem_rd_en;
-    reg [BLK_WIDTH-1:0]  cache_mem_wr_blk;
-    reg [PA_WIDTH-1:0]   cache_mem_addr;
+    // reg                  cache_mem_wr_en, cache_mem_rd_en;
+    // reg [BLK_WIDTH-1:0]  cache_mem_wr_blk;
+    // reg [PA_WIDTH-1:0]   cache_mem_addr;
 
     cache_data CACHE_DUT(
         .clk        (clk), 
@@ -87,6 +87,17 @@ module cache_tb;
         // mem_addr <= mem_addr + 32'h40;
 
         // #(CLK_PERIOD);
+
+        rd_en <= 1'b1;
+        wr_en <= 1'b0;
+        addr <= 32'h00;
+        #(CLK_CYCLES);
+        #(CLK_CYCLES);
+        #(CLK_CYCLES);
+        
+        #(CLK_CYCLES);
+        #(CLK_CYCLES);
+        #(CLK_CYCLES);
     end
 
 endmodule
