@@ -41,13 +41,13 @@ module control_unit #(
 );
 
     // state parameters
-    localparam IDLE     = 3'b000;
-    localparam RD_HIT   = 3'b001;
-    localparam RD_MISS  = 3'b010;
-    localparam WR_HIT   = 3'b011;
-    localparam WR_MISS  = 3'b100;
-    localparam RD_EVICT = 3'b101;
-    localparam WR_EVICT = 3'b110;
+    localparam IDLE       = 3'b000;
+    localparam RD_HIT     = 3'b001;
+    localparam RD_MISS    = 3'b010;
+    localparam WR_HIT     = 3'b011;
+    localparam WR_MISS    = 3'b100;
+    localparam RD_EVICT   = 3'b101;
+    localparam WR_EVICT   = 3'b110;
 
     integer i;
 
@@ -67,24 +67,21 @@ module control_unit #(
 
     // set next state
     always @(*) begin 
-        next = IDLE;
+        next = state;
         case(state)
-            IDLE: begin   
+            IDLE : begin   
                 if(~rd_en && ~wr_en)   next = IDLE;
                 else if(rd_en && hit)  next = RD_HIT;
-                else if(rd_en && ~hit) next = RD_MISS;
-                else if(wr_en && ~hit) next = WR_MISS;
                 else if(wr_en && hit)  next = WR_HIT;
+                else if(rd_en && ~hit) next = RD_EVICT;
+                else if(wr_en && ~hit) next = WR_EVICT;
             end
 
-            WR_MISS:                   next = WR_EVICT;
-            RD_MISS:                   next = RD_EVICT;
+            WR_EVICT :                 next = WR_MISS;
+            RD_EVICT :                 next = RD_MISS;
 
-            WR_HIT,
-            RD_HIT:                    next = IDLE;
-
-            WR_EVICT,
-            RD_EVICT:                  next = IDLE;
+            RD_MISS, 
+            WR_MISS :                  next = IDLE;
         endcase
     end
 
@@ -105,16 +102,18 @@ module control_unit #(
                     //i_th way
                     if(valid[i][addr[`INDEX]] && (tag[i][addr[`INDEX]] == addr[`TAG])) 
                     begin
-                        word_out = data[i][addr[`INDEX]][addr[`BOFFSET]];
-                        byte_out = word_out[`WOFFSET];
-                    end
-                end
+                        word_out = data[i][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
+                        byte_out = word_out[(addr[`WOFFSET]*BYTE) +: BYTE];
 
-                // update age registers
-                for(i = 1; i < NWAYS; i = i+1)
-                    if(lru[i][addr[`INDEX]] <= lru[i-1][addr[`INDEX]])
-                        lru[i][addr[`INDEX]] <= lru[i][addr[`INDEX]] + 1;
-                lru[0][addr[`INDEX]] <= 2'b00;   
+                        // update age registers
+                        for(j = 0; j < NWAYS; j = j+1)
+                            if((i!=j) && (lru[j][addr[`INDEX]] <= lru[i][addr[`INDEX]]))
+                                lru[j][addr[`INDEX]] <= lru[j][addr[`INDEX]] + 1;
+                        lru[i][addr[`INDEX]] <= 2'b00;
+                        
+                        disable  
+                    end
+                end  
             end
 
             WR_HIT : begin 
@@ -130,18 +129,20 @@ module control_unit #(
                         // mark as dirty block
                         dirty[i][addr[`INDEX]] <= 1'b1;
                         // overwrite data info from cache's block
-                        data[i][addr[`INDEX]][`BOFFSET] <= data_wr;
+                        data[i][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH] <= data_wr;
+
+                        // update age registers
+                        for(j = 0; j < NWAYS; j = j+1)
+                            if((i!=j) && (lru[j][addr[`INDEX]] <= lru[i][addr[`INDEX]]))
+                                lru[j][addr[`INDEX]] <= lru[j][addr[`INDEX]] + 1;
+                        lru[i][addr[`INDEX]] <= 2'b00;
+                        
+                        disable  
                     end
                 end
-
-                // update age registers
-                for(i = 1; i < NWAYS; i = i+1)
-                    if(lru[i][addr[`INDEX]] <= lru[i-1][addr[`INDEX]])
-                        lru[i][addr[`INDEX]] <= lru[i][addr[`INDEX]] + 1;
-                lru[0][addr[`INDEX]] <= 2'b00;
             end
 
-            EVICT : begin 
+            RD_EVICT : begin 
                 for (i = 0; i < NWAYS; i = i + 1) 
                 begin 
                     if (~valid[i][addr[`INDEX]]) 
@@ -163,14 +164,33 @@ module control_unit #(
                 end
             end
 
-            //aici e pizda
-            RD_MISS: begin 
-                for(i = 0; i < NWAYS; i = i + 1) 
+            WR_EVICT : begin 
+
+                for (i = 0; i < NWAYS; i = i + 1) 
                 begin 
-                    if (lru[i][addr[`INDEX]] == 2'b11) 
+                    if (~valid[i][addr[`INDEX]]) 
                     begin 
-                        word_out <= mem_rd_blk[`BOFFSET];
-                        byte_out <= mem_rd_blk[`WOFFSET];
+                        data[i][addr[`INDEX]] <= mem_rd_blk;
+                        tag[i][addr[`INDEX]] <= addr[`TAG];
+                        dirty[i][addr[`INDEX]] <= 1'b0;
+                        valid[i][addr[`INDEX]] <= 1'b1;
+                        disable;
+                    end
+                end
+
+            end
+
+            //aici e pizda
+
+            //AICI TREB DE SCHIMBAT TOT
+            RD_MISS: begin 
+
+                for (i = 0; i < NWAYS; i = i + 1) 
+                begin 
+                    if (~valid[i][addr[`INDEX]]) 
+                    begin 
+                        word_out = mem_rd_blk[(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
+                        byte_out = word_out[(addr[`WOFFSET]*BYTE) +: BYTE];
 
                         data[i][addr[`INDEX]] <= mem_rd_blk;
                         tag[i][addr[`INDEX]] <= addr[`TAG];
@@ -179,14 +199,51 @@ module control_unit #(
                         disable;
                     end
                 end
+
+
+                // for(i = 0; i < NWAYS; i = i + 1) 
+                // begin 
+                //     if (lru[i][addr[`INDEX]] == 2'b11) 
+                //     begin 
+                //         word_out = mem_rd_blk[(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
+                //         byte_out = word_out[(addr[`WOFFSET]*BYTE) +: BYTE];
+
+                //         data[i][addr[`INDEX]] <= mem_rd_blk;
+                //         tag[i][addr[`INDEX]] <= addr[`TAG];
+                //         dirty[i][addr[`INDEX]] <= 1'b0;
+                //         valid[i][addr[`INDEX]] <= 1'b1;
+                //         disable;
+                //     end
+                // end
             end
 
             WR_MISS : begin 
+
+                for (i = 0; i < NWAYS; i = i + 1) 
+                begin 
+                    if (~valid[i][addr[`INDEX]]) 
+                    begin 
+                        data[i][addr[`INDEX]] <= mem_rd_blk;
+                        tag[i][addr[`INDEX]] <= addr[`TAG];
+                        dirty[i][addr[`INDEX]] <= 1'b0;
+                        valid[i][addr[`INDEX]] <= 1'b1;
+                        disable;
+                    end
+                end
+
+
                 for(i = 0; i < NWAYS; i = i+1)
                 begin 
                     if(lru[i][addr[`INDEX]] == 2'b11)
                     begin 
+                        word_out <= {WRD_WIDTH{1'bz}};
+                        byte_out <= {BYTE{1'bz}};
 
+                        data[i][addr[`INDEX]] <= mem_rd_blk;
+                        tag[i][addr[`INDEX]] <= addr[`TAG];
+                        dirty[i][addr[`INDEX]] <= 1'b1;
+                        valid[i][addr[`INDEX]] <= 1'b1;
+                        disable;
                     end
                 end
             end
