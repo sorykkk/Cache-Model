@@ -51,7 +51,7 @@ module cache_data #(
 
     output wire                  hit,          // 1 if hit, 0 if miss
     output wire [WRD_WIDTH-1:0]  word_out,     // data from cache to CPU
-    output wire [BYTE-1:0]       byte_out,     // byte that is extracted from word
+    output wire [BYTE-1:0]       byte_out      // byte that is extracted from word
 );
 
     // Define all ways
@@ -74,7 +74,6 @@ module cache_data #(
             end
         end
     end
-
 
     // Define internal reg
     // reg                  _hit          = 1'b0;
