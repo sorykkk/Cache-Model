@@ -14,7 +14,7 @@ module mem #(
     input  wire                 rd_en,
     input  wire                 wr_en,
 
-    input  reg  [BLK_WIDTH-1:0] wr_data,
+    input  wire [BLK_WIDTH-1:0] wr_data,
     output reg  [BLK_WIDTH-1:0] rd_data
 );
 
