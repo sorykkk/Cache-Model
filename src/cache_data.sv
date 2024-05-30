@@ -12,6 +12,7 @@
 *       Number of sets:      128 sets
 *       Word size:           4   B/word
 *       Words per block:     16  words/block
+*       Memory alignment:    Big-Endian
 */
 
 `include "macros.sv"

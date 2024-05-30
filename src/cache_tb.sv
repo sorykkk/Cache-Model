@@ -6,7 +6,7 @@
 module cache_tb;
 
     localparam CLK_PERIOD = 100,
-               CLK_CYCLES = 20,
+               CLK_CYCLES = 10,
                RST_PULSE  = 25;
 
     reg                  clk, rst_n;
@@ -66,28 +66,30 @@ module cache_tb;
 
     initial begin 
         clk = 1'b1;
-        forever #(CLK_PERIOD / 2) clk = ~clk;
+        repeat(CLK_CYCLES*2) #(CLK_PERIOD / 2) clk = ~clk;
     end
 
     initial begin 
+        mem_wr_en = 1'b0;
+        mem_rd_en = 1'b0;
         rst_n = 1'b0;
         #(RST_PULSE);
         rst_n = 1'b1;
-
-        // Write some data to memory
-        mem_wr_en = 1'b1;
         mem_rd_en = 1'b0;
-
-        mem_addr = 32'h00000000;
-        mem_wr_blk = 512'hffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
         #(CLK_PERIOD-RST_PULSE);
 
-        mem_addr = mem_addr + 32'h10;
-        mem_wr_blk = 512'haaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
+        // Write some data to memory
+        mem_wr_en <= 1'b1;
+        mem_addr <= 32'h00;
+        mem_wr_blk <= 512'hffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
         #(CLK_PERIOD);
 
-        mem_addr = mem_addr + 32'h10;
-        mem_wr_blk = 512'hcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc;
+        mem_addr <= mem_addr + 32'h40;
+        mem_wr_blk <= 512'haaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
+        #(CLK_PERIOD);
+
+        mem_addr <= mem_addr + 32'h40;
+        mem_wr_blk <= 512'hcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc;
         #(CLK_PERIOD);
 
         mem_wr_en = 1'b0;
@@ -95,12 +97,10 @@ module cache_tb;
 
         // Read the data back
         #(CLK_PERIOD);
-        mem_addr = mem_addr - 32'h10;
+        mem_addr = mem_addr - 32'h40;
         #(CLK_PERIOD);
-        mem_addr = mem_addr - 32'h10;
+        mem_addr = mem_addr - 32'h40;
         #(CLK_PERIOD);
-
-        $finish();
     end
 
 endmodule
