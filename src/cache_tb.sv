@@ -40,10 +40,10 @@ module cache_tb;
         .data_wr    (data_wr),
 
         .mem_rd_blk (mem_rd_blk),
-        .mem_addr   (cache_mem_addr),
-        .mem_rd_en  (cache_mem_rd_en),
-        .mem_wr_en  (cache_mem_wr_en),
-        .mem_wr_blk (cache_mem_wr_blk),
+        .mem_addr   (mem_addr),
+        .mem_rd_en  (mem_rd_en),
+        .mem_wr_en  (mem_wr_en),
+        .mem_wr_blk (mem_wr_blk),
                             
         .hit        (hit),
         .word_out   (word_out),
@@ -70,37 +70,23 @@ module cache_tb;
     end
 
     initial begin 
-        mem_wr_en = 1'b0;
-        mem_rd_en = 1'b0;
-        rst_n = 1'b0;
-        #(RST_PULSE);
-        rst_n = 1'b1;
-        mem_rd_en = 1'b0;
-        #(CLK_PERIOD-RST_PULSE);
+        // mem_wr_en = 1'b0;
+        // mem_rd_en = 1'b0;
+        // rst_n = 1'b0;
+        // #(RST_PULSE);
+        // rst_n = 1'b1;
+        // mem_rd_en = 1'b1;
+        // #(CLK_PERIOD-RST_PULSE);
+        // mem_addr <= 32'h00;
+        // #(CLK_PERIOD);
+        // mem_addr <= mem_addr + 32'h40;
+        // #(CLK_PERIOD);
+        // mem_addr <= mem_addr + 32'h40;
 
-        // Write some data to memory
-        mem_wr_en <= 1'b1;
-        mem_addr <= 32'h00;
-        mem_wr_blk <= 512'hffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-        #(CLK_PERIOD);
+        // #(CLK_PERIOD);
+        // mem_addr <= mem_addr + 32'h40;
 
-        mem_addr <= mem_addr + 32'h40;
-        mem_wr_blk <= 512'haaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
-        #(CLK_PERIOD);
-
-        mem_addr <= mem_addr + 32'h40;
-        mem_wr_blk <= 512'hcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc;
-        #(CLK_PERIOD);
-
-        mem_wr_en = 1'b0;
-        mem_rd_en = 1'b1;
-
-        // Read the data back
-        #(CLK_PERIOD);
-        mem_addr = mem_addr - 32'h40;
-        #(CLK_PERIOD);
-        mem_addr = mem_addr - 32'h40;
-        #(CLK_PERIOD);
+        // #(CLK_PERIOD);
     end
 
 endmodule

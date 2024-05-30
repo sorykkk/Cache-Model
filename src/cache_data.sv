@@ -33,7 +33,7 @@ module cache_data
     output reg  [PA_WIDTH-1:0]   mem_addr,
     output reg                   mem_rd_en,
     output reg                   mem_wr_en,    // 1 if writing to memory
-    output reg  [BLK_WIDTH-1:0]  mem_wr_blk,   // data from cache to memory
+    output wire [BLK_WIDTH-1:0]  mem_wr_blk,   // data from cache to memory
 
     output reg                   hit,          // 1 if hit, 0 if miss
     output reg  [WRD_WIDTH-1:0]  word_out,     // data from cache to CPU
@@ -52,6 +52,20 @@ module cache_data
     wire [1:0]            _lru   [0:NWAYS-1][0:NSETS-1];
     wire [TAG_WIDTH-1:0]  _tag   [0:NWAYS-1][0:NSETS-1];
     wire [BLK_WIDTH-1:0]  _data  [0:NWAYS-1][0:NSETS-1];
+
+
+    // reg [PA_WIDTH-1:0]   _mem_addr;
+    // reg                  _mem_rd_en;
+    // reg                  _mem_wr_en;
+    // reg [BLK_WIDTH-1:0]  _mem_wr_blk;
+
+    // always @* begin 
+    //     mem_addr <= _mem_addr;
+    //     mem_rd_en <= _mem_rd_en;
+    //     mem_wr_en <= _mem_wr_en;
+    //     mem_wr_blk <= _mem_wr_blk;
+    // end
+
 
     // Init to 0 all
     integer i, j;
@@ -108,7 +122,6 @@ module cache_data
     // assign hit        = _hit;
     // assign word_out   = _word_out;
     // assign byte_out   = _byte_out;
-
 
 
     control_unit CACHE_CNTRL(   .clk        (clk),     
