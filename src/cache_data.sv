@@ -29,14 +29,14 @@ module cache_data
     
     //memory control outputs
     input  wire [BLK_WIDTH-1:0]  mem_rd_blk,
-    output wire [PA_WIDTH-1:0]   mem_addr,
-    output wire                  mem_rd_en,
-    output wire                  mem_wr_en,    // 1 if writing to memory
-    output wire [BLK_WIDTH-1:0]  mem_wr_blk,   // data from cache to memory
+    output reg  [PA_WIDTH-1:0]   mem_addr,
+    output reg                   mem_rd_en,
+    output reg                   mem_wr_en,    // 1 if writing to memory
+    output reg  [BLK_WIDTH-1:0]  mem_wr_blk,   // data from cache to memory
 
-    output wire                  hit,          // 1 if hit, 0 if miss
-    output wire [WRD_WIDTH-1:0]  word_out,     // data from cache to CPU
-    output wire [BYTE-1:0]       byte_out      // byte that is extracted from word
+    output reg                   hit,          // 1 if hit, 0 if miss
+    output reg  [WRD_WIDTH-1:0]  word_out,     // data from cache to CPU
+    output reg  [BYTE-1:0]       byte_out      // byte that is extracted from word
 );
 
     // Define all ways
@@ -45,6 +45,12 @@ module cache_data
     reg [1:0]            lru   [0:NWAYS-1][0:NSETS-1];
     reg [TAG_WIDTH-1:0]  tag   [0:NWAYS-1][0:NSETS-1];
     reg [BLK_WIDTH-1:0]  data  [0:NWAYS-1][0:NSETS-1];
+
+    wire                  _valid [0:NWAYS-1][0:NSETS-1];
+    wire                  _dirty [0:NWAYS-1][0:NSETS-1];
+    wire [1:0]            _lru   [0:NWAYS-1][0:NSETS-1];
+    wire [TAG_WIDTH-1:0]  _tag   [0:NWAYS-1][0:NSETS-1];
+    wire [BLK_WIDTH-1:0]  _data  [0:NWAYS-1][0:NSETS-1];
 
     // Init to 0 all
     integer i, j;
@@ -60,33 +66,60 @@ module cache_data
         end
     end
 
+
+    always @(posedge clk, negedge rst_n) begin 
+        if(!rst_n) begin 
+            for(i = 0; i < NWAYS; i = i+1) begin 
+                for(j = 0; j < NSETS; j = j+1) begin 
+                    valid[i][j] <= 1'b0;
+                    dirty[i][j] <= 1'b0;
+                    lru[i][j] <= 2'b00;
+                end
+            end
+        end
+        else begin 
+            for(i = 0; i < NWAYS; i = i+1) begin 
+                for(j = 0; j < NSETS; j = j+1) begin 
+                    valid[i][j] <= _valid[i][j];
+                    dirty[i][j] <= _dirty[i][j];
+                    lru[i][j] <= _lru[i][j];
+                    tag[i][j] <= _tag[i][j];
+                    data[i][j] <= _data[i][j];
+                end
+            end
+        end
+
+    end
+
     // Define internal reg
-    // reg                  _hit          = 1'b0;
-    // reg [WRD_WIDTH-1:0]  _word_out     = {WRD_WIDTH{1'b0}};
-    // reg [BYTE-1:0]       _byte_out     = {BYTE{1'b0}};
-    // reg [MEM_WIDTH-1:0]  _mem_wr_data  = {WRD_WIDTH{1'b0}};
-    // reg [PA_WIDTH-1:0]   _mem_wr_addr  = {PA_WIDTH{1'b0}};
-    // reg                  _mem_wr_en    = 1'b0; 
+    // reg [PA_WIDTH-1:0]  _mem_addr;
+    // reg                 _mem_rd_en, _mem_wr_en;
+    // reg [BLK_WIDTH-1:0] _mem_wr_blk;
+    // reg                 _hit;
+    // reg [WRD_WIDTH-1:0] _word_out;
+    // reg [BYTE-1:0]      _byte_out;
 
-    // assign hit = _hit;
 
-    // assign mem_wr_en    = _mem_wr_en;
-    // assign mem_data_out = _mem_data_out;
-    // assign mem_wr_addr  = _mem_wr_addr;
-    // assign word_out     = _word_out;
-    // assign byte_out     = _byte_out;
-    // assign mem_wr_data  = _mem_wr_data;
+    // assign mem_addr   = _mem_addr;
+    // assign mem_rd_en  = _mem_rd_en;
+    // assign mem_wr_en  = _mem_wr_en;
+    // assign mem_wr_blk = _mem_wr_blk;
+    // assign hit        = _hit;
+    // assign word_out   = _word_out;
+    // assign byte_out   = _byte_out;
+
+
 
     control_unit CACHE_CNTRL(   .clk        (clk),     
                                 .rst_n      (rst_n),
                                 .rd_en      (rd_en),
                                 .wr_en      (wr_en),
 
-                                .valid      (valid), 
-                                .dirty      (dirty),
-                                .tag        (tag),     
-                                .data       (data), 
-                                .lru        (lru),  
+                                .valid      (_valid), 
+                                .dirty      (_dirty),
+                                .tag        (_tag),     
+                                .data       (_data), 
+                                .lru        (_lru),  
 
                                 .addr       (addr),
                                 .data_wr    (data_wr),

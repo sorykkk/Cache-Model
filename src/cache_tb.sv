@@ -6,7 +6,7 @@
 module cache_tb;
 
     localparam CLK_PERIOD = 100,
-               CLK_CYCLES = 1000,
+               CLK_CYCLES = 20,
                RST_PULSE  = 25;
 
     reg                  clk, rst_n;
@@ -17,7 +17,7 @@ module cache_tb;
     reg                  rd_en, wr_en;
     
     //memory control outputs
-    reg [BLK_WIDTH-1:0]  mem_rd_blk;
+    wire [BLK_WIDTH-1:0] mem_rd_blk;
     reg [PA_WIDTH-1:0]   mem_addr;
     reg                  mem_rd_en, mem_wr_en;
     reg [BLK_WIDTH-1:0]  mem_wr_blk;
@@ -26,32 +26,38 @@ module cache_tb;
     reg [WRD_WIDTH-1:0]  word_out;
     reg [BYTE-1:0]       byte_out;
 
+    //cache signals
+    reg                  cache_mem_wr_en, cache_mem_rd_en;
+    reg [BLK_WIDTH-1:0]  cache_mem_wr_blk;
+    reg [PA_WIDTH-1:0]   cache_mem_addr;
 
     cache_data CACHE_DUT(
-                            .clk        (clk), 
-                            .rst_n      (rst_n),
-                            .rd_en      (rd_en),
-                            .wr_en      (wr_en),
+        .clk        (clk), 
+        .rst_n      (rst_n),
+        .rd_en      (rd_en),
+        .wr_en      (wr_en),
+        .addr       (addr),
+        .data_wr    (data_wr),
 
-                            .mem_rd_blk (mem_rd_blk),
-                            .mem_addr   (mem_addr),
-                            .mem_rd_en  (mem_rd_en),
-                            .mem_wr_en  (mem_wr_en),
-                            .mem_wr_blk (mem_wr_blk),
+        .mem_rd_blk (mem_rd_blk),
+        .mem_addr   (cache_mem_addr),
+        .mem_rd_en  (cache_mem_rd_en),
+        .mem_wr_en  (cache_mem_wr_en),
+        .mem_wr_blk (cache_mem_wr_blk),
                             
-                            .hit        (hit),
-                            .word_out   (word_out),
-                            .byte_out   (byte_out)
-                        );
+        .hit        (hit),
+        .word_out   (word_out),
+        .byte_out   (byte_out)
+    );
 
     mem MEM_DUT(
-                    .clk(clk),
-                    .addr(mem_addr),
-                    .rd_en(mem_rd_en),
-                    .wr_en(mem_wr_en),
-                    .wr_data(mem_wr_blk),
-                    .rd_data(mem_rd_blk)
-                );
+        .clk     (clk),
+        .addr    (mem_addr),
+        .rd_en   (mem_rd_en),
+        .wr_en   (mem_wr_en),
+        .wr_data (mem_wr_blk),
+        .rd_data (mem_rd_blk)
+    );
 
     initial begin 
         $dumpfile("cache_data.vcd");
@@ -59,12 +65,42 @@ module cache_tb;
     end
 
     initial begin 
-        clk = 1'b0;
-        repeat (50) begin #(CLK_CYCLES) clk = ~clk; end
+        clk = 1'b1;
+        forever #(CLK_PERIOD / 2) clk = ~clk;
     end
 
     initial begin 
+        rst_n = 1'b0;
+        #(RST_PULSE);
+        rst_n = 1'b1;
 
+        // Write some data to memory
+        mem_wr_en = 1'b1;
+        mem_rd_en = 1'b0;
+
+        mem_addr = 32'h00000000;
+        mem_wr_blk = 512'hffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+        #(CLK_PERIOD-RST_PULSE);
+
+        mem_addr = mem_addr + 32'h10;
+        mem_wr_blk = 512'haaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
+        #(CLK_PERIOD);
+
+        mem_addr = mem_addr + 32'h10;
+        mem_wr_blk = 512'hcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc;
+        #(CLK_PERIOD);
+
+        mem_wr_en = 1'b0;
+        mem_rd_en = 1'b1;
+
+        // Read the data back
+        #(CLK_PERIOD);
+        mem_addr = mem_addr - 32'h10;
+        #(CLK_PERIOD);
+        mem_addr = mem_addr - 32'h10;
+        #(CLK_PERIOD);
+
+        $finish();
     end
 
 endmodule
