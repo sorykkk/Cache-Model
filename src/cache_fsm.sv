@@ -1,45 +1,30 @@
-`include "macros.v"
+`include "macros.sv"
 
 // Cannot interrupt synthethizably interrupt for loop 
 // That's why i am using hard-codded if's for each way
 
-module control_unit #(
-    parameter BYTE      = `BYTE,
-    parameter SIZE      = `SIZE,
-    parameter NWAYS     = `NWAYS,
-    parameter NSETS     = `NSETS,
-    parameter BLK_WIDTH = `BLK_WIDTH,
-    parameter PA_WIDTH  = `PA_WIDTH,
-    parameter WRD_WIDTH = `WRD_WIDTH,
-
-    parameter MEM_WIDTH = `MEM_WIDTH,
-
-    parameter IDX_WIDTH = `IDX_WIDTH,
-    parameter TAG_WIDTH = `TAG_WIDTH,
-    parameter BO_WIDTH  = `BO_WIDTH,
-    parameter WO_WIDTH  = `WO_WIDTH
-)
+module control_unit
 (
     input  wire                  clk, rst_n,
     input  wire                  rd_en, wr_en,
 
-    input  reg                   valid [0:NWAYS-1][0:NSETS-1],
-    input  reg                   dirty [0:NWAYS-1][0:NSETS-1],
-    input  reg  [1:0]            lru   [0:NWAYS-1][0:NSETS-1],
-    input  reg  [TAG_WIDTH-1:0]  tag   [0:NWAYS-1][0:NSETS-1],
-    input  reg  [BLK_WIDTH-1:0]  data  [0:NWAYS-1][0:NSETS-1],
+    output reg                   valid [0:NWAYS-1][0:NSETS-1],
+    output reg                   dirty [0:NWAYS-1][0:NSETS-1],
+    output reg  [1:0]            lru   [0:NWAYS-1][0:NSETS-1],
+    output reg  [TAG_WIDTH-1:0]  tag   [0:NWAYS-1][0:NSETS-1],
+    output reg  [BLK_WIDTH-1:0]  data  [0:NWAYS-1][0:NSETS-1],
 
     input  wire [PA_WIDTH-1:0]   addr,
     input  wire [WRD_WIDTH-1:0]  data_wr,
 
-    input  wire [MEM_WIDTH-1:0]  mem_rd_blk,
+    input  wire [BLK_WIDTH-1:0]  mem_rd_blk,
 
-    output wire                  mem_wr_en,
-    output wire                  mem_rd_en,
+    output reg                   mem_wr_en,
+    output reg                   mem_rd_en,
     output reg [PA_WIDTH-1:0]    mem_addr,
     output reg [BLK_WIDTH]       mem_wr_blk,  
 
-    output reg                   hit
+    output reg                   hit,
     output reg [WRD_WIDTH-1:0]   word_out,
     output reg [BYTE-1:0]        byte_out
 );
@@ -91,8 +76,10 @@ module control_unit #(
                 end
             end
 
-            EVICT : if(wr_m)           next = WR_MISS;
+            EVICT : begin
+                    if(wr_m)           next = WR_MISS;
                     if(rd_m)           next = RD_MISS;
+            end
 
             RD_MISS, 
             WR_MISS :                  next = IDLE;

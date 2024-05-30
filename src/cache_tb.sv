@@ -1,19 +1,26 @@
-`timesclae 1ns/1ns
-`include "cache_data.v"
+`timescale 1ns/1ns
+`include "macros.sv"
+`include "cache_data.sv"
+`include "mem.sv"
 
 module cache_tb;
-    reg                  clk, rst_n,
+
+    localparam CLK_PERIOD = 100,
+               CLK_CYCLES = 1000,
+               RST_PULSE  = 25;
+
+    reg                  clk, rst_n;
     
-    reg [PA_WIDTH-1:0]   addr,
-    reg [WRD_WIDTH-1:0]  data_wr,
+    reg [PA_WIDTH-1:0]   addr;
+    reg [WRD_WIDTH-1:0]  data_wr;
     
     reg                  rd_en, wr_en;
     
     //memory control outputs
-    reg [MEM_WIDTH-1:0]  mem_rd_blk;
+    reg [BLK_WIDTH-1:0]  mem_rd_blk;
     reg [PA_WIDTH-1:0]   mem_addr;
     reg                  mem_rd_en, mem_wr_en;
-    reg [MEM_WIDTH-1:0]  mem_wr_blk;
+    reg [BLK_WIDTH-1:0]  mem_wr_blk;
 
     reg                  hit;
     reg [WRD_WIDTH-1:0]  word_out;
@@ -47,11 +54,16 @@ module cache_tb;
                 );
 
     initial begin 
-        clk = 1'b0;
-        repeat (50) clk = ~clk;
+        $dumpfile("cache_data.vcd");
+        $dumpvars(0, cache_tb);
     end
 
-    always @(*) begin 
+    initial begin 
+        clk = 1'b0;
+        repeat (50) begin #(CLK_CYCLES) clk = ~clk; end
+    end
+
+    initial begin 
 
     end
 

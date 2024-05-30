@@ -14,25 +14,10 @@
 *       Words per block:     16  words/block
 */
 
-`include "macros.v"
-`include "cache_fsm.v"
+`include "macros.sv"
+`include "cache_fsm.sv"
 
-module cache_data #(
-    parameter BYTE      = `BYTE,
-    parameter SIZE      = `SIZE,
-    parameter NWAYS     = `NWAYS,
-    parameter NSETS     = `NSETS,
-    parameter BLK_WIDTH = `BLK_WIDTH,
-    parameter PA_WIDTH  = `PA_WIDTH,
-    parameter WRD_WIDTH = `WRD_WIDTH,
-
-    parameter MEM_WIDTH = `MEM_WIDTH,
-
-    parameter IDX_WIDTH = `IDX_WIDTH,
-    parameter TAG_WIDTH = `TAG_WIDTH,
-    parameter BO_WIDTH  = `BO_WIDTH,
-    parameter WO_WIDTH  = `WO_WIDTH
-)
+module cache_data
 (
     input  wire                  clk, rst_n,
     
@@ -43,11 +28,11 @@ module cache_data #(
     input  wire                  wr_en,        // 1 if store instr
     
     //memory control outputs
-    input  wire [MEM_WIDTH-1:0]  mem_rd_blk,
+    input  wire [BLK_WIDTH-1:0]  mem_rd_blk,
     output wire [PA_WIDTH-1:0]   mem_addr,
     output wire                  mem_rd_en,
     output wire                  mem_wr_en,    // 1 if writing to memory
-    output wire [MEM_WIDTH-1:0]  mem_wr_blk,   // data from cache to memory
+    output wire [BLK_WIDTH-1:0]  mem_wr_blk,   // data from cache to memory
 
     output wire                  hit,          // 1 if hit, 0 if miss
     output wire [WRD_WIDTH-1:0]  word_out,     // data from cache to CPU
@@ -92,29 +77,29 @@ module cache_data #(
     // assign byte_out     = _byte_out;
     // assign mem_wr_data  = _mem_wr_data;
 
-    cache_fsm cache_cntrl(  .clk        (clk),     
-                            .rst_n      (rst_n),
-                            .rd_en      (rd_en),
-                            .wr_en      (wr_en),
+    control_unit CACHE_CNTRL(   .clk        (clk),     
+                                .rst_n      (rst_n),
+                                .rd_en      (rd_en),
+                                .wr_en      (wr_en),
 
-                            .valid      (valid), 
-                            .dirty      (dirty),
-                            .tag        (tag),     
-                            .data       (data), 
-                            .lru        (lru),  
+                                .valid      (valid), 
+                                .dirty      (dirty),
+                                .tag        (tag),     
+                                .data       (data), 
+                                .lru        (lru),  
 
-                            .addr       (addr),
-                            .data_wr    (data_wr),
+                                .addr       (addr),
+                                .data_wr    (data_wr),
 
-                            .mem_wr_en  (mem_wr_en),
-                            .mem_rd_en  (mem_rd_en),
-                            .mem_rd_blk (mem_rd_blk),
-                            .mem_wr_blk (mem_wr_blk),
-                            .mem_addr   (mem_addr),
+                                .mem_wr_en  (mem_wr_en),
+                                .mem_rd_en  (mem_rd_en),
+                                .mem_rd_blk (mem_rd_blk),
+                                .mem_wr_blk (mem_wr_blk),
+                                .mem_addr   (mem_addr),
 
-                            .word_out   (word_out),
-                            .byte_out   (byte_out), 
-                            .hit        (hit),
-                        );
+                                .word_out   (word_out),
+                                .byte_out   (byte_out), 
+                                .hit        (hit)
+                            );
     
 endmodule

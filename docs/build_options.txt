@@ -1,0 +1,3 @@
+compile      : iverilog -g2012 -o cache_waves.vvp cache_tb.v
+generate wave: vvp cache_waves.vvp 
+view waves   : gtkwave (open vcd file)

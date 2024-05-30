@@ -1,12 +1,9 @@
-`include "macros.v"
+`include "macros.sv"
 //treb de definit aici operatiile pe memorie
 //Un aray de byte-uri
 module mem #(
     parameter DEPTH     = (1<<20),   // 1MB
-    parameter BLK_WIDTH = `BLK_WIDTH,
-    parameter WIDTH     = `BYTE,
-    parameter WRD_WIDTH = `WRD_WIDTH,
-    parameter PA_WIDTH  = `PA_WIDTH,
+    parameter WIDTH     = BYTE,
     parameter INIT      = 0          // if 1, resets all the memory
 )
 (
@@ -17,8 +14,8 @@ module mem #(
     input  wire                 rd_en,
     input  wire                 wr_en,
 
-    input  wire [BLK_WIDTH-1:0] wr_data,
-    output wire [BLK_WIDTH-1:0] rd_data
+    input  reg  [BLK_WIDTH-1:0] wr_data,
+    output reg  [BLK_WIDTH-1:0] rd_data
 );
 
     reg [WIDTH-1:0] MM [0:DEPTH-1];

@@ -1,0 +1,243 @@
+$date
+	Thu May 30 17:43:00 2024
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1ns
+$end
+$scope module cache_tb $end
+$var wire 32 ! word_out [31:0] $end
+$var wire 1 " mem_wr_en $end
+$var wire 512 # mem_wr_blk [511:0] $end
+$var wire 1 $ mem_rd_en $end
+$var wire 512 % mem_rd_blk [511:0] $end
+$var wire 32 & mem_addr [31:0] $end
+$var wire 1 ' hit $end
+$var wire 8 ( byte_out [7:0] $end
+$var parameter 32 ) CLK_CYCLES $end
+$var parameter 32 * CLK_PERIOD $end
+$var parameter 32 + RST_PULSE $end
+$var reg 1 , clk $end
+$var reg 1 - rd_en $end
+$var reg 1 . rst_n $end
+$var reg 1 / wr_en $end
+$scope module CACHE_DUT $end
+$var wire 32 0 addr [31:0] $end
+$var wire 1 , clk $end
+$var wire 32 1 data_wr [31:0] $end
+$var wire 1 - rd_en $end
+$var wire 1 . rst_n $end
+$var wire 1 / wr_en $end
+$var wire 32 2 word_out [31:0] $end
+$var wire 1 " mem_wr_en $end
+$var wire 512 3 mem_wr_blk [511:0] $end
+$var wire 1 $ mem_rd_en $end
+$var wire 512 4 mem_rd_blk [511:0] $end
+$var wire 32 5 mem_addr [31:0] $end
+$var wire 1 ' hit $end
+$var wire 8 6 byte_out [7:0] $end
+$var integer 32 7 i [31:0] $end
+$var integer 32 8 j [31:0] $end
+$scope module CACHE_CNTRL $end
+$var wire 32 9 addr [31:0] $end
+$var wire 1 , clk $end
+$var wire 32 : data_wr [31:0] $end
+$var wire 1 ' hit $end
+$var wire 1 - rd_en $end
+$var wire 1 . rst_n $end
+$var wire 1 / wr_en $end
+$var wire 512 ; mem_rd_blk [511:0] $end
+$var parameter 3 < EVICT $end
+$var parameter 3 = IDLE $end
+$var parameter 3 > RD_HIT $end
+$var parameter 3 ? RD_MISS $end
+$var parameter 3 @ WR_HIT $end
+$var parameter 3 A WR_MISS $end
+$var reg 8 B byte_out [7:0] $end
+$var reg 32 C mem_addr [31:0] $end
+$var reg 1 $ mem_rd_en $end
+$var reg 512 D mem_wr_blk [511:0] $end
+$var reg 1 " mem_wr_en $end
+$var reg 3 E next [2:0] $end
+$var reg 1 F rd_m $end
+$var reg 3 G state [2:0] $end
+$var reg 32 H word_out [31:0] $end
+$var reg 1 I wr_m $end
+$upscope $end
+$upscope $end
+$scope module MEM_DUT $end
+$var wire 32 J addr [31:0] $end
+$var wire 1 , clk $end
+$var wire 1 $ rd_en $end
+$var wire 512 K wr_data [511:0] $end
+$var wire 1 " wr_en $end
+$var parameter 32 L BYTES_PER_WORD $end
+$var parameter 52 M DEPTH $end
+$var parameter 32 N INIT $end
+$var parameter 32 O WIDTH $end
+$var parameter 32 P WORDS_PER_BLOCK $end
+$var reg 512 Q rd_data [511:0] $end
+$var integer 32 R byte_idx [31:0] $end
+$var integer 32 S word_idx [31:0] $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+$comment Show the parameter values. $end
+$dumpall
+b10000 P
+b1000 O
+b0 N
+b100000000000000000000 M
+b100 L
+b100 A
+b11 @
+b10 ?
+b1 >
+b0 =
+b101 <
+b11001 +
+b1100100 *
+b1111101000 )
+$end
+#0
+$dumpvars
+bx S
+bx R
+bx Q
+bx K
+bx J
+xI
+bx H
+bx G
+xF
+bx E
+bx D
+bx C
+bx B
+bx ;
+bz :
+bz 9
+b10000000 8
+b100 7
+bx 6
+bx 5
+bx 4
+bx 3
+bx 2
+bz 1
+bz 0
+x/
+x.
+x-
+0,
+bx (
+x'
+bx &
+bx %
+x$
+bx #
+x"
+bx !
+$end
+#1000
+1,
+#2000
+0,
+#3000
+1,
+#4000
+0,
+#5000
+1,
+#6000
+0,
+#7000
+1,
+#8000
+0,
+#9000
+1,
+#10000
+0,
+#11000
+1,
+#12000
+0,
+#13000
+1,
+#14000
+0,
+#15000
+1,
+#16000
+0,
+#17000
+1,
+#18000
+0,
+#19000
+1,
+#20000
+0,
+#21000
+1,
+#22000
+0,
+#23000
+1,
+#24000
+0,
+#25000
+1,
+#26000
+0,
+#27000
+1,
+#28000
+0,
+#29000
+1,
+#30000
+0,
+#31000
+1,
+#32000
+0,
+#33000
+1,
+#34000
+0,
+#35000
+1,
+#36000
+0,
+#37000
+1,
+#38000
+0,
+#39000
+1,
+#40000
+0,
+#41000
+1,
+#42000
+0,
+#43000
+1,
+#44000
+0,
+#45000
+1,
+#46000
+0,
+#47000
+1,
+#48000
+0,
+#49000
+1,
+#50000
+0,
