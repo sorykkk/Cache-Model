@@ -1,7 +1,7 @@
 /*
-* Sorin Besleaga
-* Last modified: 30.05.24
-* Status: unfinished
+* Author:            Sorin Besleaga
+* Last modification: 31.05.24
+* Status:            unfinished
 */
 
 /*
@@ -12,7 +12,8 @@
 *       Number of sets:      128 sets
 *       Word size:           4   B/word
 *       Words per block:     16  words/block
-*       Memory alignment:    Big-Endian
+*       Memory alignment:    Little-Endian (bytes in words and words in blocks are stored in little-endian)
+                                            LSB bits are stored at top of Main Memory, and so in cache blocks
 */
 
 `include "macros.sv"
@@ -36,7 +37,9 @@ module cache_data
 
     output reg                   hit,          // 1 if hit, 0 if miss
     output reg  [WRD_WIDTH-1:0]  word_out,     // data from cache to CPU
-    output reg  [BYTE-1:0]       byte_out      // byte that is extracted from word
+    output reg  [BYTE-1:0]       byte_out,     // byte that is extracted from word
+
+    output reg                   rdy
 );
 
     // Define all ways
@@ -96,7 +99,8 @@ module cache_data
         next = state;
         case(state)
             IDLE : begin   
-                if(~rd_en && ~wr_en)   next = IDLE;
+                if((~rd_en && ~wr_en)||
+                    (rd_en && wr_en))  next = IDLE;
                 else if(rd_en && hit)  next = RD_HIT;
                 else if(wr_en && hit)  next = WR_HIT;
                 else if(rd_en && ~hit) 
@@ -118,8 +122,10 @@ module cache_data
                     if(rd_m)           next = RD_MISS;
             end
 
+            RD_HIT,
+            WR_HIT,
             RD_MISS, 
-            WR_MISS :                  next = IDLE;
+            WR_MISS :                  next = IDLE;              
         endcase
     end
 
@@ -139,13 +145,35 @@ module cache_data
                 byte_out <= {WRD_WIDTH{1'bz}};
                 wr_m <= 1'b0;
                 rd_m <= 1'b0;
+
+                rdy <= 1'b0;
             end
 
             RD_HIT: begin 
+                rdy <= 1'b1;
+                // begin : rd_hit_loop
+                //     for(i = 0; i < NWAYS; i = i+1)
+                //     begin 
+                //         if(valid[i][addr[`INDEX]] && (tag[i][addr[`INDEX]] == addr[`TAG])) 
+                //         begin
+                //             word_out <= data[i][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
+                //             byte_out <= data[i][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+(addr[`WOFFSET]*BYTE) +: BYTE];
+
+                //             // update age registers
+                //             for(j = 0; j < NWAYS; j = j+1)
+                //                 if((i!=j) && lru[j][addr[`INDEX]] <= lru[i][addr[`INDEX]])
+                //                     lru[j][addr[`INDEX]] <= lru[j][addr[`INDEX]] + 1;
+                //             lru[i][addr[`INDEX]] = 2'b00;
+                            
+                //             disable rd_hit_loop;
+                //         end
+                //     end
+                // end
+
                 if(valid[0][addr[`INDEX]] && (tag[0][addr[`INDEX]] == addr[`TAG])) 
                 begin
-                    word_out = data[0][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
-                    byte_out = word_out[(addr[`WOFFSET]*BYTE) +: BYTE];
+                    word_out <= data[0][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
+                    byte_out <= data[0][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+(addr[`WOFFSET]*BYTE) +: BYTE];
 
                     // update age registers
                     if(lru[1][addr[`INDEX]] <= lru[0][addr[`INDEX]]) lru[1][addr[`INDEX]] <= lru[1][addr[`INDEX]] + 1;
@@ -156,8 +184,8 @@ module cache_data
 
                 else if(valid[1][addr[`INDEX]] && (tag[1][addr[`INDEX]] == addr[`TAG])) 
                 begin
-                    word_out = data[1][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
-                    byte_out = word_out[(addr[`WOFFSET]*BYTE) +: BYTE];
+                    word_out <= data[1][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
+                    byte_out <= data[1][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+(addr[`WOFFSET]*BYTE) +: BYTE];
 
                     // update age registers
                     if(lru[0][addr[`INDEX]] <= lru[1][addr[`INDEX]]) lru[0][addr[`INDEX]] <= lru[0][addr[`INDEX]] + 1;
@@ -168,8 +196,8 @@ module cache_data
 
                 else if(valid[2][addr[`INDEX]] && (tag[2][addr[`INDEX]] == addr[`TAG])) 
                 begin
-                    word_out = data[2][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
-                    byte_out = word_out[(addr[`WOFFSET]*BYTE) +: BYTE];
+                    word_out <= data[2][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
+                    byte_out <= data[2][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+(addr[`WOFFSET]*BYTE) +: BYTE];
 
                     // update age registers
                     if(lru[1][addr[`INDEX]] <= lru[2][addr[`INDEX]]) lru[1][addr[`INDEX]] <= lru[1][addr[`INDEX]] + 1;
@@ -180,8 +208,8 @@ module cache_data
 
                 else if(valid[3][addr[`INDEX]] && (tag[3][addr[`INDEX]] == addr[`TAG])) 
                 begin
-                    word_out = data[3][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
-                    byte_out = word_out[(addr[`WOFFSET]*BYTE) +: BYTE];
+                    word_out <= data[3][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
+                    byte_out <= data[3][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+(addr[`WOFFSET]*BYTE) +: BYTE];
 
                     // update age registers
                     if(lru[1][addr[`INDEX]] <= lru[3][addr[`INDEX]]) lru[1][addr[`INDEX]] <= lru[1][addr[`INDEX]] + 1;
@@ -193,6 +221,30 @@ module cache_data
 
             WR_HIT : begin 
                  // i_th way
+                rdy <= 1'b1;
+                // begin : wr_hit_loop
+                //     for(i = 0; i < NWAYS; i = i+1)
+                //     begin 
+                //         if(valid[i][addr[`INDEX]] && (tag[i][addr[`INDEX]] == addr[`TAG])) 
+                //         begin
+                //             // for store instr there is no output/byte word
+                //             word_out = {WRD_WIDTH{1'bz}};
+                //             byte_out = {BYTE{1'bz}};
+                //             // mark as dirty block
+                //             dirty[i][addr[`INDEX]] <= 1'b1;
+                //             // overwrite data info from cache's block
+                //             data[i][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH] <= data_wr;
+
+                //             for(j = 0; j < NWAYS; j = j+1)
+                //                 if((i!=j) && lru[j][addr[`INDEX]] <= lru[i][addr[`INDEX]])
+                //                     lru[j][addr[`INDEX]] <= lru[j][addr[`INDEX]] + 1;
+                //             lru[i][addr[`INDEX]] = 2'b00;
+
+                //             disable wr_hit_loop;
+                //         end
+                //     end
+                // end
+
                 if(valid[0][addr[`INDEX]] && (tag[0][addr[`INDEX]] == addr[`TAG])) 
                 begin
                     // for store instr there is no output/byte word
@@ -256,6 +308,20 @@ module cache_data
             EVICT : begin 
                 mem_addr <= addr;
                 mem_rd_en <= 1'b1;
+
+                // begin : evict_loop 
+                //     for(i = 0; i < NWAYS; i=i+1)
+                //     begin 
+                //         if(valid[i][addr[`INDEX]] && (lru[i][addr[`INDEX]] == 2'b11) && (dirty[i][addr[`INDEX]] == 1'b1)) 
+                //         begin 
+                //             mem_addr <= addr;
+                //             mem_wr_en <= 1'b1;
+                //             mem_wr_blk <= data[i][addr[`INDEX]];
+
+                //             disable evict_loop;
+                //         end
+                //     end
+                // end
                 
                 // write-back 
                 if(valid[0][addr[`INDEX]] && (lru[0][addr[`INDEX]] == 2'b11) && (dirty[0][addr[`INDEX]] == 1'b1)) 
@@ -288,14 +354,27 @@ module cache_data
             end
 
             RD_MISS: begin 
-                //mem_rd_en <= 1'b1;
-                //mem_addr <= addr;
+                rdy <= 1'b1;
                 word_out <= mem_rd_blk[(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
                 byte_out <= mem_rd_blk[(addr[`BOFFSET]*WRD_WIDTH)+(addr[`WOFFSET]*BYTE) +: BYTE];
 
+                // begin : rd_miss_loop
+                //     for(i = 0; i < NWAYS; i = i+1)
+                //     begin 
+                //         if(~valid[i][addr[`INDEX]] || (lru[i][addr[`INDEX]] == 2'b11))
+                //         begin
+                //             data[i][addr[`INDEX]] <= mem_rd_blk;
+                //             tag[i][addr[`INDEX]] <= addr[`TAG];
+                //             dirty[i][addr[`INDEX]] <= 1'b0;
+                //             valid[i][addr[`INDEX]] <= 1'b1;
+
+                //             disable rd_miss_loop;
+                //         end
+                //     end
+                // end
+
                 if(~valid[0][addr[`INDEX]] || (lru[0][addr[`INDEX]] == 2'b11))
                 begin
-                    $display("HERE BITCH");
                     data[0][addr[`INDEX]] <= mem_rd_blk;
                     tag[0][addr[`INDEX]] <= addr[`TAG];
                     dirty[0][addr[`INDEX]] <= 1'b0;
@@ -328,8 +407,24 @@ module cache_data
             end
 
             WR_MISS : begin 
+                rdy <= 1'b1;
                 word_out = {WRD_WIDTH{1'bz}};
                 byte_out = {BYTE{1'bz}};
+
+                // begin : wr_miss_loop
+                //     for(i = 0; i < NWAYS; i = i+1)
+                //     begin 
+                //         if(~valid[i][addr[`INDEX]] || (lru[i][addr[`INDEX]] == 2'b11))
+                //         begin
+                //             data[i][addr[`INDEX]] <= data_wr;
+                //             tag[i][addr[`INDEX]] <= addr[`TAG];
+                //             dirty[i][addr[`INDEX]] <= 1'b1;
+                //             valid[i][addr[`INDEX]] <= 1'b1;
+
+                //             disable wr_miss_loop;
+                //         end
+                //     end
+                // end
 
                 if(~valid[0][addr[`INDEX]] || (lru[0][addr[`INDEX]] == 2'b11))
                 begin

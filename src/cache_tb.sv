@@ -6,7 +6,7 @@
 module cache_tb;
 
     localparam CLK_PERIOD = 100,
-               CLK_CYCLES = 10,
+               CLK_CYCLES = 20,
                RST_PULSE  = 25;
 
     reg                  clk, rst_n;
@@ -25,6 +25,8 @@ module cache_tb;
     reg                  hit;
     reg [WRD_WIDTH-1:0]  word_out;
     reg [BYTE-1:0]       byte_out;
+
+    reg                  rdy;
 
     //cache signals
     // reg                  cache_mem_wr_en, cache_mem_rd_en;
@@ -47,7 +49,9 @@ module cache_tb;
                             
         .hit        (hit),
         .word_out   (word_out),
-        .byte_out   (byte_out)
+        .byte_out   (byte_out),
+
+        .rdy        (rdy)
     );
 
     mem MEM_DUT(
@@ -66,7 +70,7 @@ module cache_tb;
 
     initial begin 
         clk = 1'b1;
-        repeat(CLK_CYCLES*2) #(CLK_PERIOD / 2) clk = ~clk;
+        forever #(CLK_PERIOD / 2) clk = ~clk;
     end
 
     initial begin 
@@ -96,13 +100,22 @@ module cache_tb;
         #(RST_PULSE);
         rst_n <= 1'b1;
 
-        #(CLK_CYCLES);
-        #(CLK_CYCLES);
-        #(CLK_CYCLES);
+        @(posedge rdy);
+        addr <= 32'h15;
+        @(posedge rdy);
+        //next word
+        addr <= addr + 32'h04;
+        @(posedge rdy);
 
-        #(CLK_CYCLES);
-        #(CLK_CYCLES);
-        #(CLK_CYCLES);
+        addr <= addr + 32'h04;
+        @(posedge rdy);
+
+        addr <= addr + 32'h04;
+        @(posedge rdy);
+        @(posedge rdy);
+
+        $finish();
+        
     end
 
 endmodule
