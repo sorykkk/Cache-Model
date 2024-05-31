@@ -64,16 +64,6 @@ module cache_data
         end
     end
 
-    // always @* begin 
-    //     for(i = 0; i < NWAYS; i = i + 1) 
-    //     begin
-    //         for(j = 0; j < NSETS; j = j + 1) 
-    //         begin 
-    //             $display("valid = %h dirty = %h lru = %h", valid[i][j], dirty[i][j], lru[i][j]);
-    //         end
-    //         $display("=======\n");
-    //     end
-    // end
 
     // start of actual FSM
 
