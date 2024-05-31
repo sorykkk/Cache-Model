@@ -2,11 +2,11 @@
 //treb de definit aici operatiile pe memorie
 //Un aray de byte-uri
 module mem #(
-    parameter DEPTH     = (1<<10),   // 1KB
+    parameter DEPTH     = (1<<15),   // 32KB
     parameter WIDTH     = BYTE,
     parameter INIT      = 0,         // if 1, resets all the memory
     parameter SEED      = 1,
-    parameter NSEED_BLK = 4
+    parameter NSEED_BLK = 512
 )
 (
     input  wire                 clk,

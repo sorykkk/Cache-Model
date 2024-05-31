@@ -5,9 +5,9 @@
 
 module cache_tb;
 
-    localparam CLK_PERIOD = 100,
-               CLK_CYCLES = 20,
-               RST_PULSE  = 25;
+    localparam           CLK_PERIOD = 100,
+                         CLK_CYCLES = 20,
+                         RST_PULSE  = 25;
 
     reg                  clk, rst_n;
     
@@ -22,16 +22,12 @@ module cache_tb;
     reg                  mem_rd_en, mem_wr_en;
     reg [BLK_WIDTH-1:0]  mem_wr_blk;
 
+    //cache output
     reg                  hit;
     reg [WRD_WIDTH-1:0]  word_out;
     reg [BYTE-1:0]       byte_out;
 
     reg                  rdy;
-
-    //cache signals
-    // reg                  cache_mem_wr_en, cache_mem_rd_en;
-    // reg [BLK_WIDTH-1:0]  cache_mem_wr_blk;
-    // reg [PA_WIDTH-1:0]   cache_mem_addr;
 
     cache_data CACHE_DUT(
         .clk        (clk), 
@@ -92,28 +88,69 @@ module cache_tb;
 
         // #(CLK_PERIOD);
         
-
+        //reset
         rst_n <= 1'b0;
         rd_en <= 1'b1;
         wr_en <= 1'b0;
+        //read miss
         addr <= 32'h00;
         #(RST_PULSE);
         rst_n <= 1'b1;
-
         @(posedge rdy);
+
+        //read hit
         addr <= 32'h15;
         @(posedge rdy);
         //next word
+        //read hit
         addr <= addr + 32'h04;
         @(posedge rdy);
 
-        addr <= addr + 32'h04;
+        // addr <= addr + 32'h04;
+        // @(posedge rdy);
+
+        // addr <= addr + 32'h04;
+        // @(posedge rdy);
+        // addr <= addr + 32'h01;
+        // @(posedge rdy);
+        // addr <= 32'h80;
+        // @(posedge rdy);
+        // addr <= addr + 32'h40;
+        // @(posedge rdy);
+        // addr <= addr + 32'h40;
+        // @(posedge rdy);
+        // addr <= addr + 32'h40;
+        // @(posedge rdy);
+        
+        // addr <= 32'h20d5;
+        // @(posedge rdy);
+
+        // addr <= addr;
+        // @(posedge rdy);
+
+        //write miss
+        wr_en <= 1'b1;
+        rd_en <= 1'b0;
+        data_wr <= 32'hfafa_fafa;
+        addr <= 32'h20d5; //8405
         @(posedge rdy);
 
-        addr <= addr + 32'h04;
-        @(posedge rdy);
+        //write hit
+        data_wr <= 32'hdada_dada;
+        addr <= 32'h20d5;
         @(posedge rdy);
 
+        //read hit
+        wr_en <= 1'b0;
+        rd_en <= 1'b1;
+        addr <= 32'h20d5;
+        @(posedge rdy);
+
+        //read miss or write miss to replace dirty blocks to MM
+
+
+
+        @(posedge clk);
         $finish();
         
     end
