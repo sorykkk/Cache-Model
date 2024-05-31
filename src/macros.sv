@@ -1,3 +1,9 @@
+/*
+* Author:            Sorin Besleaga
+* Last modification: 29.05.24
+* Status:            finished
+*/
+
 //byte-addressable
 `ifndef _macros_h
 `define _macros_h
@@ -6,6 +12,8 @@
     `define BOFFSET 5:2   // block offset
     `define INDEX   12:6  // index slice
     `define TAG     31:13 // tag slice
+
+    localparam TST_SIZE  = (1<<12);
 
     //Cache defines:
     localparam BYTE      = 8;       // 1 B =  8 bits

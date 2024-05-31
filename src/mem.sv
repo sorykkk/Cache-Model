@@ -1,6 +1,13 @@
+/*
+* Author:            Sorin Besleaga
+* Last modification: 30.05.24
+* Status:            finished
+*/
+
 `include "macros.sv"
 //treb de definit aici operatiile pe memorie
 //Un aray de byte-uri
+
 module mem #(
     parameter DEPTH     = (1<<15),   // 32KB
     parameter WIDTH     = BYTE,
@@ -69,10 +76,14 @@ module mem #(
             for (word_idx = 0; word_idx < WORDS_PER_BLOCK; word_idx = word_idx + 1) begin
                 for (byte_idx = 0; byte_idx < BYTES_PER_WORD; byte_idx = byte_idx + 1) begin
                     MM[addr + (word_idx * BYTES_PER_WORD) + byte_idx] = wr_data[(word_idx * WRD_WIDTH) + (byte_idx * WIDTH) +: WIDTH];
-                    //$display("(addr: %d)(index_addr: %d) %h",addr,addr + (word_idx * BYTES_PER_WORD) + byte_idx, MM[addr + (word_idx * BYTES_PER_WORD) + byte_idx]);
+                    
+                    //It assures that when it is read and write enables at the same time, it will provide at rd_data the value that come in wr_data
+                    if(rd_en)
+                        rd_data[(word_idx * WRD_WIDTH) + (byte_idx * WIDTH) +: WIDTH] = wr_data[(word_idx * WRD_WIDTH) + (byte_idx * WIDTH) +: WIDTH];
+                    // $display("(addr: %d)(index_addr: %d) %h",addr,addr + (word_idx * BYTES_PER_WORD) + byte_idx, MM[addr + (word_idx * BYTES_PER_WORD) + byte_idx]);
                 end
             end
-            //$display("\n");
+            // $display("\n");
         end
     end
 

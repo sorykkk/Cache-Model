@@ -17,7 +17,7 @@ module cache_tb;
     reg                  rd_en, wr_en;
     
     //memory control outputs
-    wire [BLK_WIDTH-1:0] mem_rd_blk;
+    wire[BLK_WIDTH-1:0]  mem_rd_blk;
     reg [PA_WIDTH-1:0]   mem_addr;
     reg                  mem_rd_en, mem_wr_en;
     reg [BLK_WIDTH-1:0]  mem_wr_blk;
@@ -68,85 +68,105 @@ module cache_tb;
         clk = 1'b1;
         forever #(CLK_PERIOD / 2) clk = ~clk;
     end
-
-    initial begin 
-        // mem_wr_en = 1'b0;
-        // mem_rd_en = 1'b0;
-        // rst_n = 1'b0;
-        // #(RST_PULSE);
-        // rst_n = 1'b1;
-        // mem_rd_en = 1'b1;
-        // #(CLK_PERIOD-RST_PULSE);
-        // mem_addr <= 32'h00;
-        // #(CLK_PERIOD);
-        // mem_addr <= mem_addr + 32'h40;
-        // #(CLK_PERIOD);
-        // mem_addr <= mem_addr + 32'h40;
-
-        // #(CLK_PERIOD);
-        // mem_addr <= mem_addr + 32'h40;
-
-        // #(CLK_PERIOD);
-        
+    reg[31:0] i;
+    initial begin  
         //reset
-        rst_n <= 1'b0;
-        rd_en <= 1'b1;
-        wr_en <= 1'b0;
+        rst_n = 1'b0;
+        rd_en = 1'b1;
+        wr_en = 1'b0;
         //read miss
-        addr <= 32'h00;
+        addr = 32'h00;//8
         #(RST_PULSE);
-        rst_n <= 1'b1;
+        rst_n = 1'b1;
         @(posedge rdy);
 
-        //read hit
-        addr <= 32'h15;
-        @(posedge rdy);
-        //next word
-        //read hit
-        addr <= addr + 32'h04;
-        @(posedge rdy);
 
-        // addr <= addr + 32'h04;
-        // @(posedge rdy);
+        // // //read hit
+        // // addr <= 32'h15;
+        // // @(posedge rdy);
+        // // //next word
+        // // //read hit
+        // // addr <= addr + 32'h04;
+        // // @(posedge rdy);
 
-        // addr <= addr + 32'h04;
-        // @(posedge rdy);
-        // addr <= addr + 32'h01;
-        // @(posedge rdy);
-        // addr <= 32'h80;
-        // @(posedge rdy);
-        // addr <= addr + 32'h40;
-        // @(posedge rdy);
-        // addr <= addr + 32'h40;
-        // @(posedge rdy);
-        // addr <= addr + 32'h40;
-        // @(posedge rdy);
-        
-        // addr <= 32'h20d5;
-        // @(posedge rdy);
+        // // //write miss
+        // // wr_en <= 1'b1;
+        // // rd_en <= 1'b0;
+        // // data_wr <= 32'hfafa_fafa;
+        // // addr <= 32'h20d5; //8405
+        // // @(posedge rdy);
 
-        // addr <= addr;
-        // @(posedge rdy);
+        // // //write hit
+        // // data_wr <= 32'hdada_dada;
+        // // addr <= 32'h20d5;
+        // // @(posedge rdy);
 
-        //write miss
-        wr_en <= 1'b1;
-        rd_en <= 1'b0;
-        data_wr <= 32'hfafa_fafa;
-        addr <= 32'h20d5; //8405
-        @(posedge rdy);
-
-        //write hit
-        data_wr <= 32'hdada_dada;
-        addr <= 32'h20d5;
-        @(posedge rdy);
-
-        //read hit
-        wr_en <= 1'b0;
-        rd_en <= 1'b1;
-        addr <= 32'h20d5;
-        @(posedge rdy);
+        // // //read hit
+        // // wr_en <= 1'b0;
+        // // rd_en <= 1'b1;
+        // // addr <= 32'h20d5;
+        // // @(posedge rdy);
 
         //read miss or write miss to replace dirty blocks to MM
+        //set 0
+        addr = 32'h2000;
+        @(posedge rdy);
+        addr = 32'h4000;
+        @(posedge rdy);
+        addr = 32'h6000;
+        @(posedge rdy);
+
+        //write hit + lru increment
+        rd_en = 1'b0;
+        wr_en = 1'b1;
+        addr = 32'h4000;
+        data_wr = 32'hfafa_fafa;
+        @(posedge rdy);
+
+        //read hit 
+        rd_en = 1'b1;
+        wr_en = 1'b0;
+        @(posedge rdy);
+
+        //read/write miss + replacement
+        addr = 32'h8000;
+        @(posedge rdy);
+
+
+        // //set1
+        // addr = 32'h0040;
+        // @(posedge rdy);
+        // addr = 32'h2040;
+        // @(posedge rdy);
+        // addr = 32'h4040;
+        // @(posedge rdy);
+        // addr = 32'h6040;
+        // @(posedge rdy);
+
+
+        // //read hits to increase lru
+        // addr = 32'h2000;
+        // @(posedge rdy);
+        // //read hits next word
+        // addr = addr + 32'h4;
+        // @(posedge rdy);
+
+        // addr = addr + 32'h40 - 32'h4;
+        // @(posedge rdy);
+
+        // //write to 32'h2040 with incremented lru
+        // //write hit
+        // rd_en = 1'b0;
+        // wr_en = 1'b1;
+        // data_wr = 32'hfafa_fafa;
+        // addr = 32'h2040;
+        // @(posedge rdy);
+
+        // //read hit
+        // rd_en = 1'b1;
+        // wr_en = 1'b0;
+        // addr = 32'h00;
+        // @(posedge rdy);
 
 
 

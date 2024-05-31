@@ -1,7 +1,7 @@
 /*
 * Author:            Sorin Besleaga
 * Last modification: 31.05.24
-* Status:            unfinished
+* Status:            finished
 */
 
 /*
@@ -35,6 +35,7 @@ module cache_data
     output reg                   mem_wr_en,    // 1 if writing to memory
     output reg [BLK_WIDTH-1:0]   mem_wr_blk,   // data from cache to memory
 
+    //cache outputs
     output reg                   hit,          // 1 if hit, 0 if miss
     output reg  [WRD_WIDTH-1:0]  word_out,     // data from cache to CPU
     output reg  [BYTE-1:0]       byte_out,     // byte that is extracted from word
@@ -129,14 +130,14 @@ module cache_data
         endcase
     end
 
-    // always @* begin 
-    //     for(i = 0; i < NWAYS; i = i+1)
-    //     begin 
-    //         $display("(set idx: %d)(block idx: %d)(BO: %d) (WO: %d) lru = %b",addr[`INDEX],i, addr[`INDEX], addr[`BOFFSET], addr[`WOFFSET], lru[i][addr[`INDEX]]);
-    //     end
-    //     $display("==================\n");
-
-    // end
+    always @* begin 
+        $display("ADDR: %b(%d)ten (%h)hex SET: %d",addr, addr,addr, addr[`INDEX]);
+        for(i = 0; i < NWAYS; i = i+1)
+        begin 
+            $display("(block idx: %d)(BO: %d) (WO: %d) valid = %b lru = %b dirty = %b",i, addr[`BOFFSET], addr[`WOFFSET], valid[i][addr[`INDEX]], lru[i][addr[`INDEX]], dirty[i][addr[`INDEX]]);
+        end
+        $display("==================\n");
+    end
 
     // trigger signals based on next state
     always @(posedge clk, negedge rst_n) 
@@ -148,18 +149,10 @@ module cache_data
                       ||(valid[2][addr[`INDEX]] && (tag[2][addr[`INDEX]] == addr[`TAG]))
                       ||(valid[3][addr[`INDEX]] && (tag[3][addr[`INDEX]] == addr[`TAG])));
 
-                wr_m <= 1'b0;
-                rd_m <= 1'b0;
-
-                mem_wr_en <= 1'b0;
-                mem_rd_en <= 1'b0;
+                {wr_m, rd_m, mem_wr_en, mem_rd_en, rdy} <= 5'b00000;
 
                 word_out <= {WRD_WIDTH{1'bz}};
                 byte_out <= {WRD_WIDTH{1'bz}};
-
-                rdy <= 1'b0;
-
-                
             end
 
             RD_HIT: begin 
@@ -174,7 +167,7 @@ module cache_data
 
                             // update age registers
                             for(j = 0; j < NWAYS; j = j+1)
-                                if((i!=j) && (lru[j][addr[`INDEX]] <= lru[i][addr[`INDEX]]))
+                                if((i!=j) && (lru[j][addr[`INDEX]] <= lru[i][addr[`INDEX]]) && valid[j][addr[`INDEX]])
                                     lru[j][addr[`INDEX]] <= lru[j][addr[`INDEX]] + 2'b01;
                             lru[i][addr[`INDEX]] <= 2'b00;
 
@@ -182,54 +175,6 @@ module cache_data
                         end
                     end
                 end
-
-                // if(valid[0][addr[`INDEX]] && (tag[0][addr[`INDEX]] == addr[`TAG])) 
-                // begin
-                //     word_out <= data[0][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
-                //     byte_out <= data[0][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+(addr[`WOFFSET]*BYTE) +: BYTE];
-
-                //     // update age registers
-                //     if(lru[1][addr[`INDEX]] <= lru[0][addr[`INDEX]]) lru[1][addr[`INDEX]] <= lru[1][addr[`INDEX]] + 1;
-                //     if(lru[2][addr[`INDEX]] <= lru[0][addr[`INDEX]]) lru[2][addr[`INDEX]] <= lru[2][addr[`INDEX]] + 1;
-                //     if(lru[3][addr[`INDEX]] <= lru[0][addr[`INDEX]]) lru[3][addr[`INDEX]] <= lru[3][addr[`INDEX]] + 1;
-                //     lru[0][addr[`INDEX]] = 2'b00;
-                // end
-
-                // else if(valid[1][addr[`INDEX]] && (tag[1][addr[`INDEX]] == addr[`TAG])) 
-                // begin
-                //     word_out <= data[1][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
-                //     byte_out <= data[1][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+(addr[`WOFFSET]*BYTE) +: BYTE];
-
-                //     // update age registers
-                //     if(lru[0][addr[`INDEX]] <= lru[1][addr[`INDEX]]) lru[0][addr[`INDEX]] <= lru[0][addr[`INDEX]] + 1;
-                //     if(lru[2][addr[`INDEX]] <= lru[1][addr[`INDEX]]) lru[2][addr[`INDEX]] <= lru[2][addr[`INDEX]] + 1;
-                //     if(lru[3][addr[`INDEX]] <= lru[1][addr[`INDEX]]) lru[3][addr[`INDEX]] <= lru[3][addr[`INDEX]] + 1;
-                //     lru[1][addr[`INDEX]] = 2'b00;
-                // end
-
-                // else if(valid[2][addr[`INDEX]] && (tag[2][addr[`INDEX]] == addr[`TAG])) 
-                // begin
-                //     word_out <= data[2][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
-                //     byte_out <= data[2][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+(addr[`WOFFSET]*BYTE) +: BYTE];
-
-                //     // update age registers
-                //     if(lru[1][addr[`INDEX]] <= lru[2][addr[`INDEX]]) lru[1][addr[`INDEX]] <= lru[1][addr[`INDEX]] + 1;
-                //     if(lru[0][addr[`INDEX]] <= lru[2][addr[`INDEX]]) lru[0][addr[`INDEX]] <= lru[0][addr[`INDEX]] + 1;
-                //     if(lru[3][addr[`INDEX]] <= lru[2][addr[`INDEX]]) lru[3][addr[`INDEX]] <= lru[3][addr[`INDEX]] + 1;
-                //     lru[2][addr[`INDEX]] = 2'b00;
-                // end
-
-                // else if(valid[3][addr[`INDEX]] && (tag[3][addr[`INDEX]] == addr[`TAG])) 
-                // begin
-                //     word_out <= data[3][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
-                //     byte_out <= data[3][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+(addr[`WOFFSET]*BYTE) +: BYTE];
-
-                //     // update age registers
-                //     if(lru[1][addr[`INDEX]] <= lru[3][addr[`INDEX]]) lru[1][addr[`INDEX]] <= lru[1][addr[`INDEX]] + 1;
-                //     if(lru[2][addr[`INDEX]] <= lru[3][addr[`INDEX]]) lru[2][addr[`INDEX]] <= lru[2][addr[`INDEX]] + 1;
-                //     if(lru[0][addr[`INDEX]] <= lru[3][addr[`INDEX]]) lru[0][addr[`INDEX]] <= lru[0][addr[`INDEX]] + 1;
-                //     lru[3][addr[`INDEX]] = 2'b00;
-                // end
             end
 
             WR_HIT : begin 
@@ -249,7 +194,7 @@ module cache_data
                             data[i][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH] <= data_wr;
 
                             for(j = 0; j < NWAYS; j = j+1)
-                                if((i!=j) && lru[j][addr[`INDEX]] <= lru[i][addr[`INDEX]])
+                                if((i!=j) && lru[j][addr[`INDEX]] <= lru[i][addr[`INDEX]] && valid[j][addr[`INDEX]])
                                     lru[j][addr[`INDEX]] <= lru[j][addr[`INDEX]] + 1;
                             lru[i][addr[`INDEX]] <= 2'b00;
 
@@ -257,65 +202,6 @@ module cache_data
                         end
                     end
                 end
-
-                // if(valid[0][addr[`INDEX]] && (tag[0][addr[`INDEX]] == addr[`TAG])) 
-                // begin
-                //     // for store instr there is no output/byte word
-                //     word_out = {WRD_WIDTH{1'bz}};
-                //     byte_out = {BYTE{1'bz}};
-                //     // mark as dirty block
-                //     dirty[0][addr[`INDEX]] <= 1'b1;
-                //     // overwrite data info from cache's block
-                //     data[0][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH] <= data_wr;
-
-                //     // update age registers
-                //     if(lru[1][addr[`INDEX]] <= lru[0][addr[`INDEX]]) lru[1][addr[`INDEX]] <= lru[1][addr[`INDEX]] + 1;
-                //     if(lru[2][addr[`INDEX]] <= lru[0][addr[`INDEX]]) lru[2][addr[`INDEX]] <= lru[2][addr[`INDEX]] + 1;
-                //     if(lru[3][addr[`INDEX]] <= lru[0][addr[`INDEX]]) lru[3][addr[`INDEX]] <= lru[3][addr[`INDEX]] + 1;
-                //     lru[0][addr[`INDEX]] = 2'b00;
-                // end
-
-                // else if(valid[1][addr[`INDEX]] && (tag[1][addr[`INDEX]] == addr[`TAG])) 
-                // begin
-                //     word_out = {WRD_WIDTH{1'bz}};
-                //     byte_out = {BYTE{1'bz}};
-                //     dirty[1][addr[`INDEX]] <= 1'b1;
-                //     data[1][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH] <= data_wr;
-
-                //     // update age registers
-                //     if(lru[0][addr[`INDEX]] <= lru[1][addr[`INDEX]]) lru[0][addr[`INDEX]] <= lru[0][addr[`INDEX]] + 1;
-                //     if(lru[2][addr[`INDEX]] <= lru[1][addr[`INDEX]]) lru[2][addr[`INDEX]] <= lru[2][addr[`INDEX]] + 1;
-                //     if(lru[3][addr[`INDEX]] <= lru[1][addr[`INDEX]]) lru[3][addr[`INDEX]] <= lru[3][addr[`INDEX]] + 1;
-                //     lru[1][addr[`INDEX]] = 2'b00;
-                // end
-
-                // else if(valid[2][addr[`INDEX]] && (tag[2][addr[`INDEX]] == addr[`TAG])) 
-                // begin
-                //     word_out = {WRD_WIDTH{1'bz}};
-                //     byte_out = {BYTE{1'bz}};
-                //     dirty[2][addr[`INDEX]] <= 1'b1;
-                //     data[2][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH] <= data_wr;
-
-                //     // update age registers
-                //     if(lru[1][addr[`INDEX]] <= lru[2][addr[`INDEX]]) lru[1][addr[`INDEX]] <= lru[1][addr[`INDEX]] + 1;
-                //     if(lru[0][addr[`INDEX]] <= lru[2][addr[`INDEX]]) lru[0][addr[`INDEX]] <= lru[0][addr[`INDEX]] + 1;
-                //     if(lru[3][addr[`INDEX]] <= lru[2][addr[`INDEX]]) lru[3][addr[`INDEX]] <= lru[3][addr[`INDEX]] + 1;
-                //     lru[2][addr[`INDEX]] = 2'b00;
-                // end
-
-                // else if(valid[3][addr[`INDEX]] && (tag[3][addr[`INDEX]] == addr[`TAG])) 
-                // begin
-                //     word_out = {WRD_WIDTH{1'bz}};
-                //     byte_out = {BYTE{1'bz}};
-                //     dirty[3][addr[`INDEX]] <= 1'b1;
-                //     data[3][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH] <= data_wr;
-
-                //     // update age registers
-                //     if(lru[1][addr[`INDEX]] <= lru[3][addr[`INDEX]]) lru[1][addr[`INDEX]] <= lru[1][addr[`INDEX]] + 1;
-                //     if(lru[2][addr[`INDEX]] <= lru[3][addr[`INDEX]]) lru[2][addr[`INDEX]] <= lru[2][addr[`INDEX]] + 1;
-                //     if(lru[0][addr[`INDEX]] <= lru[3][addr[`INDEX]]) lru[0][addr[`INDEX]] <= lru[0][addr[`INDEX]] + 1;
-                //     lru[3][addr[`INDEX]] = 2'b00;
-                // end
             end
 
             EVICT : begin 
@@ -325,49 +211,20 @@ module cache_data
                 begin : evict_loop 
                     for(i = 0; i < NWAYS; i=i+1)
                     begin 
-                        if(valid[i][addr[`INDEX]] && (lru[i][addr[`INDEX]] == 2'b11) && (dirty[i][addr[`INDEX]] == 1'b1)) 
+                        if(valid[i][addr[`INDEX]]  && (dirty[i][addr[`INDEX]] == 1'b1)) //&& (lru[i][addr[`INDEX]] == 2'b11)
                         begin 
-                            mem_addr <= addr;
                             mem_wr_en <= 1'b1;
                             mem_wr_blk <= data[i][addr[`INDEX]];
-
+                            
                             disable evict_loop;
                         end
                     end
                 end
-                
-                // // write-back 
-                // if(valid[0][addr[`INDEX]] && (lru[0][addr[`INDEX]] == 2'b11) && (dirty[0][addr[`INDEX]] == 1'b1)) 
-                // begin 
-                //     mem_addr <= addr;
-                //     mem_wr_en <= 1'b1;
-                //     mem_wr_blk <= data[0][addr[`INDEX]];
-                // end
-
-                // else if(valid[1][addr[`INDEX]] && (lru[1][addr[`INDEX]] == 2'b11) && (dirty[1][addr[`INDEX]] == 1'b1)) 
-                // begin 
-                //     mem_addr <= addr;
-                //     mem_wr_en <= 1'b1;
-                //     mem_wr_blk <= data[1][addr[`INDEX]];
-                // end
-
-                // else if(valid[2][addr[`INDEX]] && (lru[2][addr[`INDEX]] == 2'b11) && (dirty[2][addr[`INDEX]] == 1'b1)) 
-                // begin 
-                //     mem_addr <= addr;
-                //     mem_wr_en <= 1'b1;
-                //     mem_wr_blk <= data[2][addr[`INDEX]];
-                // end
-
-                // else if(valid[3][addr[`INDEX]] && (lru[3][addr[`INDEX]] == 2'b11) && (dirty[3][addr[`INDEX]] == 1'b1)) 
-                // begin 
-                //     mem_addr <= addr;
-                //     mem_wr_en <= 1'b1;
-                //     mem_wr_blk <= data[3][addr[`INDEX]];
-                // end
             end
 
             RD_MISS: begin 
                 rdy <= 1'b1;
+                mem_wr_en <= 1'b0;
                 word_out <= mem_rd_blk[(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
                 byte_out <= mem_rd_blk[(addr[`BOFFSET]*WRD_WIDTH)+(addr[`WOFFSET]*BYTE) +: BYTE];
 
@@ -380,47 +237,15 @@ module cache_data
                             tag[i][addr[`INDEX]] <= addr[`TAG];
                             dirty[i][addr[`INDEX]] <= 1'b0;
                             valid[i][addr[`INDEX]] <= 1'b1;
-
                             disable rd_miss_loop;
                         end
                     end
                 end
-
-                // if(~valid[0][addr[`INDEX]] || (lru[0][addr[`INDEX]] == 2'b11))
-                // begin
-                //     data[0][addr[`INDEX]] <= mem_rd_blk;
-                //     tag[0][addr[`INDEX]] <= addr[`TAG];
-                //     dirty[0][addr[`INDEX]] <= 1'b0;
-                //     valid[0][addr[`INDEX]] <= 1'b1;
-                // end
-                
-                // else if(~valid[1][addr[`INDEX]] || (lru[1][addr[`INDEX]] == 2'b11))
-                // begin
-                //     data[1][addr[`INDEX]] <= mem_rd_blk;
-                //     tag[1][addr[`INDEX]] <= addr[`TAG];
-                //     dirty[1][addr[`INDEX]] <= 1'b0;
-                //     valid[1][addr[`INDEX]] <= 1'b1;
-                // end
-
-                // else if(~valid[2][addr[`INDEX]] || (lru[2][addr[`INDEX]] == 2'b11))
-                // begin
-                //     data[2][addr[`INDEX]] <= mem_rd_blk;
-                //     tag[2][addr[`INDEX]] <= addr[`TAG];
-                //     dirty[2][addr[`INDEX]] <= 1'b0;
-                //     valid[2][addr[`INDEX]] <= 1'b1;
-                // end
-
-                // else if(~valid[3][addr[`INDEX]] || (lru[3][addr[`INDEX]] == 2'b11))
-                // begin
-                //     data[3][addr[`INDEX]] <= mem_rd_blk;
-                //     tag[3][addr[`INDEX]] <= addr[`TAG];
-                //     dirty[3][addr[`INDEX]] <= 1'b0;
-                //     valid[3][addr[`INDEX]] <= 1'b1;
-                // end
             end
 
             WR_MISS : begin 
                 rdy <= 1'b1;
+                mem_rd_en <= 1'b0;
                 word_out = {WRD_WIDTH{1'bz}};
                 byte_out = {BYTE{1'bz}};
 
@@ -438,38 +263,6 @@ module cache_data
                         end
                     end
                 end
-
-                // if(~valid[0][addr[`INDEX]] || (lru[0][addr[`INDEX]] == 2'b11))
-                // begin
-                //     data[0][addr[`INDEX]] <= data_wr;
-                //     tag[0][addr[`INDEX]] <= addr[`TAG];
-                //     dirty[0][addr[`INDEX]] <= 1'b1;
-                //     valid[0][addr[`INDEX]] <= 1'b1;
-                // end
-
-                // else if(~valid[1][addr[`INDEX]] || (lru[1][addr[`INDEX]] == 2'b11))
-                // begin
-                //     data[1][addr[`INDEX]] <= data_wr;
-                //     tag[1][addr[`INDEX]] <= addr[`TAG];
-                //     dirty[1][addr[`INDEX]] <= 1'b1;
-                //     valid[1][addr[`INDEX]] <= 1'b1;
-                // end
-
-                // else if(~valid[2][addr[`INDEX]] || (lru[2][addr[`INDEX]] == 2'b11))
-                // begin
-                //     data[2][addr[`INDEX]] <= data_wr;
-                //     tag[2][addr[`INDEX]] <= addr[`TAG];
-                //     dirty[2][addr[`INDEX]] <= 1'b1;
-                //     valid[2][addr[`INDEX]] <= 1'b1;
-                // end
-
-                // else if(~valid[3][addr[`INDEX]] || (lru[3][addr[`INDEX]] == 2'b11))
-                // begin
-                //     data[3][addr[`INDEX]] <= data_wr;
-                //     tag[3][addr[`INDEX]] <= addr[`TAG];
-                //     dirty[3][addr[`INDEX]] <= 1'b1;
-                //     valid[3][addr[`INDEX]] <= 1'b1;
-                // end
             end
         endcase
     end
