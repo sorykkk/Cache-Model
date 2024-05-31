@@ -140,6 +140,7 @@ module cache_data
     end
 
     // trigger signals based on next state
+    integer expected;
     always @(posedge clk, negedge rst_n) 
     begin 
         case(next)
@@ -164,7 +165,9 @@ module cache_data
                         begin
                             word_out <= data[i][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
                             byte_out <= data[i][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+(addr[`WOFFSET]*BYTE) +: BYTE];
-
+                            
+                            //expected  = i;
+                            $display("RD LRU i VAL = %b", lru[i][addr[`INDEX]]);
                             // update age registers
                             for(j = 0; j < NWAYS; j = j+1)
                                 if((i!=j) && (lru[j][addr[`INDEX]] <= lru[i][addr[`INDEX]]) && valid[j][addr[`INDEX]])
@@ -175,6 +178,7 @@ module cache_data
                         end
                     end
                 end
+                
             end
 
             WR_HIT : begin 
@@ -193,8 +197,9 @@ module cache_data
                             // overwrite data info from cache's block
                             data[i][addr[`INDEX]][(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH] <= data_wr;
 
+                            $display("WR LRU i VAL = %b", lru[i][addr[`INDEX]]);
                             for(j = 0; j < NWAYS; j = j+1)
-                                if((i!=j) && lru[j][addr[`INDEX]] <= lru[i][addr[`INDEX]] && valid[j][addr[`INDEX]])
+                                if((i!=j) && (lru[j][addr[`INDEX]] <= lru[i][addr[`INDEX]]) && valid[j][addr[`INDEX]])
                                     lru[j][addr[`INDEX]] <= lru[j][addr[`INDEX]] + 1;
                             lru[i][addr[`INDEX]] <= 2'b00;
 
@@ -211,8 +216,9 @@ module cache_data
                 begin : evict_loop 
                     for(i = 0; i < NWAYS; i=i+1)
                     begin 
-                        if(valid[i][addr[`INDEX]]  && (dirty[i][addr[`INDEX]] == 1'b1)) //&& (lru[i][addr[`INDEX]] == 2'b11)
+                        if(valid[i][addr[`INDEX]]  && (dirty[i][addr[`INDEX]] == 1'b1) && (lru[i][addr[`INDEX]] == 2'b11)) //&& (lru[i][addr[`INDEX]] == 2'b11)
                         begin 
+                            $display("HAPPY EVICTING!");
                             mem_wr_en <= 1'b1;
                             mem_wr_blk <= data[i][addr[`INDEX]];
                             
@@ -231,12 +237,19 @@ module cache_data
                 begin : rd_miss_loop
                     for(i = 0; i < NWAYS; i = i+1)
                     begin 
-                        if(~valid[i][addr[`INDEX]] || (lru[i][addr[`INDEX]] == 2'b11))
+                        if(~valid[i][addr[`INDEX]] || (dirty[i][addr[`INDEX]] == 1'b1))
                         begin
                             data[i][addr[`INDEX]] <= mem_rd_blk;
                             tag[i][addr[`INDEX]] <= addr[`TAG];
                             dirty[i][addr[`INDEX]] <= 1'b0;
                             valid[i][addr[`INDEX]] <= 1'b1;
+
+                            // update age registers
+                            for(j = 0; j < NWAYS; j = j+1)
+                                if((i!=j) && (lru[j][addr[`INDEX]] <= lru[i][addr[`INDEX]]) && valid[j][addr[`INDEX]])
+                                    lru[j][addr[`INDEX]] <= lru[j][addr[`INDEX]] + 2'b01;
+                            lru[i][addr[`INDEX]] <= 2'b00;
+
                             disable rd_miss_loop;
                         end
                     end
@@ -252,12 +265,18 @@ module cache_data
                 begin : wr_miss_loop
                     for(i = 0; i < NWAYS; i = i+1)
                     begin 
-                        if(~valid[i][addr[`INDEX]] || (lru[i][addr[`INDEX]] == 2'b11))
+                        if(~valid[i][addr[`INDEX]] || (dirty[i][addr[`INDEX]] == 1'b1))
                         begin
                             data[i][addr[`INDEX]] <= data_wr;
                             tag[i][addr[`INDEX]] <= addr[`TAG];
                             dirty[i][addr[`INDEX]] <= 1'b1;
                             valid[i][addr[`INDEX]] <= 1'b1;
+
+                            // update age registers
+                            for(j = 0; j < NWAYS; j = j+1)
+                                if((i!=j) && (lru[j][addr[`INDEX]] <= lru[i][addr[`INDEX]]) && valid[j][addr[`INDEX]])
+                                    lru[j][addr[`INDEX]] <= lru[j][addr[`INDEX]] + 2'b01;
+                            lru[i][addr[`INDEX]] <= 2'b00;
 
                             disable wr_miss_loop;
                         end

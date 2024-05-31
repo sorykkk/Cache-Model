@@ -81,31 +81,31 @@ module cache_tb;
         @(posedge rdy);
 
 
-        // // //read hit
-        // // addr <= 32'h15;
-        // // @(posedge rdy);
-        // // //next word
-        // // //read hit
-        // // addr <= addr + 32'h04;
-        // // @(posedge rdy);
+        // //read hit
+        // addr <= 32'h15;
+        // @(posedge rdy);
+        // //next word
+        // //read hit
+        // addr <= addr + 32'h04;
+        // @(posedge rdy);
 
-        // // //write miss
-        // // wr_en <= 1'b1;
-        // // rd_en <= 1'b0;
-        // // data_wr <= 32'hfafa_fafa;
-        // // addr <= 32'h20d5; //8405
-        // // @(posedge rdy);
+        // //write miss
+        // wr_en <= 1'b1;
+        // rd_en <= 1'b0;
+        // data_wr <= 32'hfafa_fafa;
+        // addr <= 32'h20d5; //8405
+        // @(posedge rdy);
 
-        // // //write hit
-        // // data_wr <= 32'hdada_dada;
-        // // addr <= 32'h20d5;
-        // // @(posedge rdy);
+        // //write hit
+        // data_wr <= 32'hdada_dada;
+        // addr <= 32'h20d5;
+        // @(posedge rdy);
 
-        // // //read hit
-        // // wr_en <= 1'b0;
-        // // rd_en <= 1'b1;
-        // // addr <= 32'h20d5;
-        // // @(posedge rdy);
+        // //read hit
+        // wr_en <= 1'b0;
+        // rd_en <= 1'b1;
+        // addr <= 32'h20d5;
+        // @(posedge rdy);
 
         //read miss or write miss to replace dirty blocks to MM
         //set 0
