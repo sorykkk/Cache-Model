@@ -16,7 +16,6 @@
 */
 
 `include "macros.sv"
-`include "cache_fsm.sv"
 
 module cache_data
 (
@@ -59,8 +58,18 @@ module cache_data
                 lru  [i][j] = 2'b00;
             end
         end
-
     end
+
+    // always @* begin 
+    //     for(i = 0; i < NWAYS; i = i + 1) 
+    //     begin
+    //         for(j = 0; j < NSETS; j = j + 1) 
+    //         begin 
+    //             $display("valid = %h dirty = %h lru = %h", valid[i][j], dirty[i][j], lru[i][j]);
+    //         end
+    //         $display("=======\n");
+    //     end
+    // end
 
     // start of actual FSM
 
@@ -70,14 +79,8 @@ module cache_data
     localparam RD_MISS    = 3'b010;
     localparam WR_HIT     = 3'b011;
     localparam WR_MISS    = 3'b100;
-    localparam EVICT   = 3'b101;
-
-    assign hit = ((valid[0][addr[`INDEX]] && (tag[0][addr[`INDEX]] == addr[`TAG]))
-                ||(valid[1][addr[`INDEX]] && (tag[1][addr[`INDEX]] == addr[`TAG]))
-                ||(valid[2][addr[`INDEX]] && (tag[2][addr[`INDEX]] == addr[`TAG]))
-                ||(valid[3][addr[`INDEX]] && (tag[3][addr[`INDEX]] == addr[`TAG])));
-
-                
+    localparam EVICT      = 3'b101;
+         
     // state registers
     reg[2:0] state, next;
     reg rd_m, wr_m;
@@ -125,6 +128,11 @@ module cache_data
     begin 
         case(next)
             IDLE: begin 
+                hit <= ((valid[0][addr[`INDEX]] && (tag[0][addr[`INDEX]] == addr[`TAG]))
+                      ||(valid[1][addr[`INDEX]] && (tag[1][addr[`INDEX]] == addr[`TAG]))
+                      ||(valid[2][addr[`INDEX]] && (tag[2][addr[`INDEX]] == addr[`TAG]))
+                      ||(valid[3][addr[`INDEX]] && (tag[3][addr[`INDEX]] == addr[`TAG])));
+
                 mem_wr_en <= 1'b0;
                 mem_rd_en <= 1'b0;
                 word_out <= {WRD_WIDTH{1'bz}};
@@ -246,6 +254,7 @@ module cache_data
             end
 
             EVICT : begin 
+                mem_addr <= addr;
                 mem_rd_en <= 1'b1;
                 
                 // write-back 
@@ -279,11 +288,14 @@ module cache_data
             end
 
             RD_MISS: begin 
-                word_out = mem_rd_blk[(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
-                byte_out = word_out[(addr[`WOFFSET]*BYTE) +: BYTE];
+                //mem_rd_en <= 1'b1;
+                //mem_addr <= addr;
+                word_out <= mem_rd_blk[(addr[`BOFFSET]*WRD_WIDTH)+:WRD_WIDTH];
+                byte_out <= mem_rd_blk[(addr[`BOFFSET]*WRD_WIDTH)+(addr[`WOFFSET]*BYTE) +: BYTE];
 
                 if(~valid[0][addr[`INDEX]] || (lru[0][addr[`INDEX]] == 2'b11))
                 begin
+                    $display("HERE BITCH");
                     data[0][addr[`INDEX]] <= mem_rd_blk;
                     tag[0][addr[`INDEX]] <= addr[`TAG];
                     dirty[0][addr[`INDEX]] <= 1'b0;

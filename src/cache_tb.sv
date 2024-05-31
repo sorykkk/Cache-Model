@@ -87,13 +87,15 @@ module cache_tb;
         // mem_addr <= mem_addr + 32'h40;
 
         // #(CLK_PERIOD);
+        
+
         rst_n <= 1'b0;
         rd_en <= 1'b1;
         wr_en <= 1'b0;
         addr <= 32'h00;
         #(RST_PULSE);
         rst_n <= 1'b1;
-        
+
         #(CLK_CYCLES);
         #(CLK_CYCLES);
         #(CLK_CYCLES);
