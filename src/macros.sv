@@ -13,8 +13,6 @@
     `define INDEX   12:6  // index slice
     `define TAG     31:13 // tag slice
 
-    localparam TST_SIZE  = (1<<12);
-
     //Cache defines:
     localparam BYTE      = 8;       // 1 B =  8 bits
     localparam SIZE      = (1<<18); // total size of cache data size in bits

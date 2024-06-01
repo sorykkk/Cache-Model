@@ -81,31 +81,31 @@ module cache_tb;
         @(posedge rdy);
 
 
-        // //read hit
-        // addr <= 32'h15;
-        // @(posedge rdy);
-        // //next word
-        // //read hit
-        // addr <= addr + 32'h04;
-        // @(posedge rdy);
+        //read hit
+        addr <= 32'h15;
+        @(posedge rdy);
+        //next word
+        //read hit
+        addr <= addr + 32'h04;
+        @(posedge rdy);
 
-        // //write miss
-        // wr_en <= 1'b1;
-        // rd_en <= 1'b0;
-        // data_wr <= 32'hfafa_fafa;
-        // addr <= 32'h20d5; //8405
-        // @(posedge rdy);
+        //write miss
+        wr_en <= 1'b1;
+        rd_en <= 1'b0;
+        data_wr <= 32'hfafa_fafa;
+        addr <= 32'h20d5; //8405
+        @(posedge rdy);
 
-        // //write hit
-        // data_wr <= 32'hdada_dada;
-        // addr <= 32'h20d5;
-        // @(posedge rdy);
+        //write hit
+        data_wr <= 32'hdada_dada;
+        addr <= 32'h20d5;
+        @(posedge rdy);
 
-        // //read hit
-        // wr_en <= 1'b0;
-        // rd_en <= 1'b1;
-        // addr <= 32'h20d5;
-        // @(posedge rdy);
+        //read hit
+        wr_en <= 1'b0;
+        rd_en <= 1'b1;
+        addr <= 32'h20d5;
+        @(posedge rdy);
 
         //read miss or write miss to replace dirty blocks to MM
         //set 0
@@ -131,44 +131,6 @@ module cache_tb;
         //read/write miss + replacement
         addr = 32'h8000;
         @(posedge rdy);
-
-
-        // //set1
-        // addr = 32'h0040;
-        // @(posedge rdy);
-        // addr = 32'h2040;
-        // @(posedge rdy);
-        // addr = 32'h4040;
-        // @(posedge rdy);
-        // addr = 32'h6040;
-        // @(posedge rdy);
-
-
-        // //read hits to increase lru
-        // addr = 32'h2000;
-        // @(posedge rdy);
-        // //read hits next word
-        // addr = addr + 32'h4;
-        // @(posedge rdy);
-
-        // addr = addr + 32'h40 - 32'h4;
-        // @(posedge rdy);
-
-        // //write to 32'h2040 with incremented lru
-        // //write hit
-        // rd_en = 1'b0;
-        // wr_en = 1'b1;
-        // data_wr = 32'hfafa_fafa;
-        // addr = 32'h2040;
-        // @(posedge rdy);
-
-        // //read hit
-        // rd_en = 1'b1;
-        // wr_en = 1'b0;
-        // addr = 32'h00;
-        // @(posedge rdy);
-
-
 
         @(posedge clk);
         $finish();
